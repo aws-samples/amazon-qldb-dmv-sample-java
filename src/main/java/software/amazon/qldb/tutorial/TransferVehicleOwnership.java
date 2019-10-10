@@ -64,7 +64,7 @@ public final class TransferVehicleOwnership {
     public static Person findPersonFromDocumentId(final TransactionExecutor txn, final String documentId) {
         try {
             log.info("Finding person for documentId: {}...", documentId);
-            final String query = "SELECT * FROM Person AS p BY pid WHERE pid = ?";
+            final String query = "SELECT p.* FROM Person AS p BY pid WHERE pid = ?";
             final List<IonValue> parameters = Collections.singletonList(Constants.MAPPER.writeValueAsIonValue(documentId));
             Result result = txn.execute(query, parameters);
             if (result.isEmpty()) {
