@@ -167,7 +167,7 @@ public final class SampleData {
     public static QldbRevision getDocumentById(QldbSession qldbSession, String tableName, String documentId) {
         try {
             final List<IonValue> parameters = Collections.singletonList(Constants.MAPPER.writeValueAsIonValue(documentId));
-            final String query = String.format("SELECT * FROM _ql_committed_%s AS p BY docId WHERE docId = ?", tableName);
+            final String query = String.format("SELECT c.* FROM _ql_committed_%s AS c BY docId WHERE docId = ?", tableName);
             Result result = qldbSession.execute(query, parameters);
             if (result.isEmpty()) {
                 throw new IllegalStateException("Unable to retrieve document by id " + documentId + " in table " + tableName);

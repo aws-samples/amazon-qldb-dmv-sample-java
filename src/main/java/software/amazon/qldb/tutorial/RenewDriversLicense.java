@@ -91,7 +91,7 @@ public final class RenewDriversLicense {
     public static void verifyDriverFromLicenseNumber(final TransactionExecutor txn, final String personId) {
         try {
             log.info("Finding person with person ID: {}...", personId);
-            final String query = "SELECT * FROM Person BY pid WHERE pid = ?";
+            final String query = "SELECT p.* FROM Person AS p BY pid WHERE pid = ?";
             final List<IonValue> parameters = Collections.singletonList(Constants.MAPPER.writeValueAsIonValue(personId));
             Result result = txn.execute(query, parameters);
             if (result.isEmpty()) {
