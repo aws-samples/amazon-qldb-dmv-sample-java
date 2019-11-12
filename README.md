@@ -1,4 +1,4 @@
-# AmazonQLDB Samples
+# Amazon QLDB Java DMV Sample App
 
 The samples in this project demonstrate several uses of Amazon QLDB.
 
@@ -6,20 +6,7 @@ The samples in this project demonstrate several uses of Amazon QLDB.
 
 ### Basic Configuration
 
-You need to set up your AWS security credentials before the sample code is able
-to connect to AWS. You can do this by creating a file named "config" at `~/.aws/` 
-(`C:\Users\USER_NAME\.aws\` for Windows users) and saving the following lines in the file:
-
-    [default]
-    aws_access_key_id = <your access key id>
-    aws_secret_access_key = <your secret key>
-    region = us-east-1 <or other region>
-
-Alternatively, us the [AWS CLI](https://aws.amazon.com/cli/) and run `aws configure` to 
-step through a setup wizard for the config file.
-
-See the [Security Credentials](http://aws.amazon.com/security-credentials) page
-for more information on getting your keys.
+See [Accessing Amazon QLDB](https://docs.aws.amazon.com/qldb/latest/developerguide/accessing.html) for information on connecting to AWS.
 
 ### Java 8 and Gradle
 
@@ -28,10 +15,10 @@ the Gradle wrapper is bundled in the project and does not need to be installed. 
 detail to install Java 8 and information on Gradle:
 
 * [Java 8 Installation](https://docs.oracle.com/javase/8/docs/technotes/guides/install/install_overview.html)
-* [Gradle]()
+* [Gradle](https://gradle.org/)
 * [Gradle Wrapper](https://docs.gradle.org/3.3/userguide/gradle_wrapper.html)
 
-# Running the Sample code
+## Running the Sample code
 
 The sample code creates a ledger with tables and indexes, and inserts some documents into those tables,
 among other things. Each of the examples in this project can be run in the following way:
@@ -50,3 +37,17 @@ Unix:
 
 The above example will build the CreateLedger class with the necessary dependencies and create a ledger named:
 `vehicle-registration`. You may run other examples after creating a ledger.
+
+## Documentation
+
+To generate JavaDoc documentation for this repository, run the following:
+
+```
+./gradlew javadoc
+```
+
+Generated documentation can be found in `./build/docs/javadoc/`.
+
+## License
+
+This library is licensed under the Apache 2.0 license.
