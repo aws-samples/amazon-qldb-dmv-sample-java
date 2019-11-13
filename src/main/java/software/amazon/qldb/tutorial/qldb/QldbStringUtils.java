@@ -26,11 +26,15 @@ import com.amazonaws.services.qldb.model.GetDigestResult;
 import com.amazonaws.services.qldb.model.ValueHolder;
 
 import java.io.IOException;
+import java.util.Base64;
+import java.util.Base64.Encoder;
 
 /**
  * Helper methods to pretty-print certain QLDB response types.
  */
 public class QldbStringUtils {
+
+    private static final Encoder ENCODER = Base64.getEncoder();
 
     private QldbStringUtils() {}
 
@@ -93,7 +97,8 @@ public class QldbStringUtils {
         StringBuilder sb = new StringBuilder();
         sb.append("{");
         if (getDigestResult.getDigest() != null) {
-            sb.append("Digest: ").append(getDigestResult.getDigest()).append(",");
+            String digest = ENCODER.encodeToString(getDigestResult.getDigest().array());
+            sb.append("Digest: ").append(digest).append(",");
         }
 
         if (getDigestResult.getDigestTipAddress() != null) {
