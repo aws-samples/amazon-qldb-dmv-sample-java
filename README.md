@@ -73,6 +73,7 @@ Below is a list of the sample applications included in this repository with the 
 - ListJournalExports
 
 - DescribeJournalExport
+
   **Note:** To execute this test, you need to pass the ExportId that will be in the output of `ListJournalExports`. You can execute the test like this:
 
   ```bash
