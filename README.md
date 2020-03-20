@@ -38,15 +38,61 @@ Unix:
 The above example will build the CreateLedger class with the necessary dependencies and create a ledger named:
 `vehicle-registration`. You may run other examples after creating a ledger.
 
-## Documentation
+### Samples
 
-To generate JavaDoc documentation for this repository, run the following:
+Below is a list of the sample applications included in this repository with the recommended order of execution.
 
-```
-./gradlew javadoc
-```
+### Setting up the test ledger
 
-Generated documentation can be found in `./build/docs/javadoc/`.
+- CreateLedger
+- ListLedgers
+- DescribeLedger
+- ConnectToLedger
+- CreateTable
+- CreateIndex
+- InsertDocument
+- ScanTable
+
+### Transaction management, PartiQL queries examples and History
+
+- AddSecondaryOwner
+- DeregisterDriversLicense
+- FindVehicles
+- RegisterDriversLicense
+- RenewDriversLicense
+- TransferVehicleOwnership
+- DeregisterDriversLicense
+- QueryHistory
+- OccConflictDemo
+- InsertIonTypes
+
+### Exporting data
+
+- ExportJournal
+
+- ListJournalExports
+
+- DescribeJournalExport
+  **Note:** To execute this test, you need to pass the ExportId that will be in the output of `ListJournalExports`. You can execute the test like this:
+
+  ```bash
+  ./gradlew run -Dtutorial=DescribeJournalExport --args="<Export Id obtained from the output of ListJournalExports>"	
+  ```
+
+### Verifying data
+
+- GetRevision
+- GetDigest
+- GetBlock
+- ValidateQldbHashChain
+
+### Other Ledger management operations
+
+- TagResource
+- DeletionProtection
+- DeleteLedger
+
+
 
 ## License
 

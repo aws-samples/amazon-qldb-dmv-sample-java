@@ -21,7 +21,6 @@ package software.amazon.qldb.tutorial;
 import com.amazonaws.services.qldb.AmazonQLDB;
 import com.amazonaws.services.qldb.model.GetDigestRequest;
 import com.amazonaws.services.qldb.model.GetDigestResult;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.qldb.tutorial.qldb.QldbStringUtils;

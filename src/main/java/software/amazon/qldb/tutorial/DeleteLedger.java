@@ -22,7 +22,6 @@ import com.amazonaws.services.qldb.AmazonQLDB;
 import com.amazonaws.services.qldb.model.DeleteLedgerRequest;
 import com.amazonaws.services.qldb.model.DeleteLedgerResult;
 import com.amazonaws.services.qldb.model.ResourceNotFoundException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

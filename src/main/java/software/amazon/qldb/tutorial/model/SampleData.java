@@ -18,6 +18,17 @@
 
 package software.amazon.qldb.tutorial.model;
 
+import com.amazon.ion.Decimal;
+import com.amazon.ion.IonString;
+import com.amazon.ion.IonStruct;
+import com.amazon.ion.IonValue;
+import software.amazon.qldb.QldbSession;
+import software.amazon.qldb.Result;
+import software.amazon.qldb.TransactionExecutor;
+import software.amazon.qldb.tutorial.Constants;
+import software.amazon.qldb.tutorial.qldb.DmlResultDocument;
+import software.amazon.qldb.tutorial.qldb.QldbRevision;
+
 import java.io.IOException;
 import java.text.ParseException;
 import java.time.LocalDate;
@@ -26,18 +37,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import com.amazon.ion.Decimal;
-import com.amazon.ion.IonString;
-import com.amazon.ion.IonStruct;
-import com.amazon.ion.IonValue;
-
-import software.amazon.qldb.QldbSession;
-import software.amazon.qldb.Result;
-import software.amazon.qldb.TransactionExecutor;
-import software.amazon.qldb.tutorial.Constants;
-import software.amazon.qldb.tutorial.qldb.DmlResultDocument;
-import software.amazon.qldb.tutorial.qldb.QldbRevision;
 
 /**
  * Sample domain objects for use throughout this tutorial.

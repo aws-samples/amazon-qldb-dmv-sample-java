@@ -22,7 +22,6 @@ import com.amazonaws.services.qldb.AmazonQLDB;
 import com.amazonaws.services.qldb.AmazonQLDBClientBuilder;
 import com.amazonaws.services.qldb.model.DescribeJournalS3ExportRequest;
 import com.amazonaws.services.qldb.model.DescribeJournalS3ExportResult;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

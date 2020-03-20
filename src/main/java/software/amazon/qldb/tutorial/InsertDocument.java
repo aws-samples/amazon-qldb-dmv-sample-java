@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -18,21 +18,19 @@
 
 package software.amazon.qldb.tutorial;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
+import com.amazon.ion.IonValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.amazon.ion.IonValue;
-
 import software.amazon.qldb.QldbSession;
 import software.amazon.qldb.TransactionExecutor;
 import software.amazon.qldb.tutorial.model.DriversLicense;
 import software.amazon.qldb.tutorial.model.SampleData;
 import software.amazon.qldb.tutorial.model.VehicleRegistration;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Insert documents into a table in a QLDB ledger.
@@ -61,10 +59,10 @@ public final class InsertDocument {
                                                final List documents) {
         log.info("Inserting some documents in the {} table...", tableName);
         try {
-            final String query = String.format("INSERT INTO %s ?", tableName);
+            final String statement = String.format("INSERT INTO %s ?", tableName);
             final IonValue ionDocuments = Constants.MAPPER.writeValueAsIonValue(documents);
             final List<IonValue> parameters = Collections.singletonList(ionDocuments);
-            return SampleData.getDocumentIdsFromDmlResult(txn.execute(query, parameters));
+            return SampleData.getDocumentIdsFromDmlResult(txn.execute(statement, parameters));
         } catch (IOException ioe) {
             throw new IllegalStateException(ioe);
         }
@@ -91,22 +89,17 @@ public final class InsertDocument {
     }
 
     public static void main(final String... args) {
-        try (QldbSession qldbSession = ConnectToLedger.createQldbSession()) {
-            final List<DriversLicense> newDriversLicenses = new ArrayList<>();
-            final List<VehicleRegistration> newVehicleRegistrations = new ArrayList<>();
-
-            qldbSession.execute(txn -> {
-                List<String> documentIds = insertDocuments(txn, Constants.PERSON_TABLE_NAME, SampleData.PEOPLE);
-                updatePersonId(documentIds, newDriversLicenses, newVehicleRegistrations);
-                insertDocuments(txn, Constants.VEHICLE_TABLE_NAME, SampleData.VEHICLES);
-                insertDocuments(txn, Constants.VEHICLE_REGISTRATION_TABLE_NAME,
-                        Collections.unmodifiableList(newVehicleRegistrations));
-                insertDocuments(txn, Constants.DRIVERS_LICENSE_TABLE_NAME,
-                        Collections.unmodifiableList(newDriversLicenses));
-            }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
-            log.info("Documents inserted successfully!");
-        } catch (Exception e) {
-            log.error("Error inserting or updating documents.", e);
-        }
+        final List<DriversLicense> newDriversLicenses = new ArrayList<>();
+        final List<VehicleRegistration> newVehicleRegistrations = new ArrayList<>();
+        ConnectToLedger.getDriver().execute(txn -> {
+            List<String> documentIds = insertDocuments(txn, Constants.PERSON_TABLE_NAME, SampleData.PEOPLE);
+            updatePersonId(documentIds, newDriversLicenses, newVehicleRegistrations);
+            insertDocuments(txn, Constants.VEHICLE_TABLE_NAME, SampleData.VEHICLES);
+            insertDocuments(txn, Constants.VEHICLE_REGISTRATION_TABLE_NAME,
+                    Collections.unmodifiableList(newVehicleRegistrations));
+            insertDocuments(txn, Constants.DRIVERS_LICENSE_TABLE_NAME,
+                    Collections.unmodifiableList(newDriversLicenses));
+        }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
+        log.info("Documents inserted successfully!");
     }
 }

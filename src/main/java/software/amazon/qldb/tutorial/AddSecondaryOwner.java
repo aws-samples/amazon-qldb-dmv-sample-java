@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import com.amazon.ion.IonValue;
 
-import software.amazon.qldb.QldbSession;
 import software.amazon.qldb.Result;
 import software.amazon.qldb.TransactionExecutor;
 import software.amazon.qldb.tutorial.model.Owner;
@@ -104,8 +103,7 @@ public final class AddSecondaryOwner {
             final String query = String.format("FROM VehicleRegistration AS v WHERE v.VIN = '%s' " +
                     "INSERT INTO v.Owners.SecondaryOwners VALUE ?", vin);
             final IonValue newOwner = Constants.MAPPER.writeValueAsIonValue(new Owner(secondaryOwner));
-            final List<IonValue> parameters = Collections.singletonList(newOwner);
-            Result result = txn.execute(query, parameters);
+            Result result = txn.execute(query, newOwner);
             log.info("VehicleRegistration Document IDs which had secondary owners added: ");
             ScanTable.printDocuments(result);
         } catch (IOException ioe) {
@@ -117,18 +115,14 @@ public final class AddSecondaryOwner {
         final String vin = SampleData.VEHICLES.get(1).getVin();
         final String govId = SampleData.PEOPLE.get(0).getGovId();
 
-        try (QldbSession qldbSession = ConnectToLedger.createQldbSession()) {
-            qldbSession.execute(txn -> {
-                final String documentId = Person.getDocumentIdByGovId(txn, govId);
-                if (isSecondaryOwnerForVehicle(txn, vin, documentId)) {
-                    log.info("Person with ID {} has already been added as a secondary owner of this vehicle.", govId);
-                } else {
-                    addSecondaryOwnerForVin(txn, vin, documentId);
-                }
-            }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
-            log.info("Secondary owners successfully updated.");
-        } catch (Exception e) {
-            log.error("Error adding secondary owner.", e);
-        }
+        ConnectToLedger.getDriver().execute(txn -> {
+            final String documentId = Person.getDocumentIdByGovId(txn, govId);
+            if (isSecondaryOwnerForVehicle(txn, vin, documentId)) {
+                log.info("Person with ID {} has already been added as a secondary owner of this vehicle.", govId);
+            } else {
+                addSecondaryOwnerForVin(txn, vin, documentId);
+            }
+        }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
+        log.info("Secondary owners successfully updated.");
     }
 }

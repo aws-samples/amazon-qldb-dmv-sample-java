@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -21,7 +21,6 @@ package software.amazon.qldb.tutorial;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import software.amazon.qldb.QldbSession;
 import software.amazon.qldb.Result;
 import software.amazon.qldb.TransactionExecutor;
 import software.amazon.qldb.tutorial.model.SampleData;
@@ -56,19 +55,15 @@ public final class CreateIndex {
     }
 
     public static void main(final String... args) {
-        try (QldbSession qldbSession = ConnectToLedger.createQldbSession()) {
-            qldbSession.execute(txn -> {
-                createIndex(txn, Constants.PERSON_TABLE_NAME, Constants.PERSON_GOV_ID_INDEX_NAME);
-                createIndex(txn, Constants.VEHICLE_TABLE_NAME, Constants.VIN_INDEX_NAME);
-                createIndex(txn, Constants.DRIVERS_LICENSE_TABLE_NAME, Constants.DRIVER_LICENSE_NUMBER_INDEX_NAME);
-                createIndex(txn, Constants.DRIVERS_LICENSE_TABLE_NAME, Constants.DRIVER_LICENSE_PERSONID_INDEX_NAME);
-                createIndex(txn, Constants.VEHICLE_REGISTRATION_TABLE_NAME, Constants.VIN_INDEX_NAME);
-                createIndex(txn, Constants.VEHICLE_REGISTRATION_TABLE_NAME,
-                        Constants.VEHICLE_REGISTRATION_LICENSE_PLATE_NUMBER_INDEX_NAME);
-            }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
-            log.info("Indexes created successfully!");
-        } catch (Exception e) {
-            log.error("Unable to create indexes.", e);
-        }
+        ConnectToLedger.getDriver().execute(txn -> {
+            createIndex(txn, Constants.PERSON_TABLE_NAME, Constants.PERSON_GOV_ID_INDEX_NAME);
+            createIndex(txn, Constants.VEHICLE_TABLE_NAME, Constants.VIN_INDEX_NAME);
+            createIndex(txn, Constants.DRIVERS_LICENSE_TABLE_NAME, Constants.DRIVER_LICENSE_NUMBER_INDEX_NAME);
+            createIndex(txn, Constants.DRIVERS_LICENSE_TABLE_NAME, Constants.DRIVER_LICENSE_PERSONID_INDEX_NAME);
+            createIndex(txn, Constants.VEHICLE_REGISTRATION_TABLE_NAME, Constants.VIN_INDEX_NAME);
+            createIndex(txn, Constants.VEHICLE_REGISTRATION_TABLE_NAME,
+                    Constants.VEHICLE_REGISTRATION_LICENSE_PLATE_NUMBER_INDEX_NAME);
+        }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
+        log.info("Indexes created successfully!");
     }
 }

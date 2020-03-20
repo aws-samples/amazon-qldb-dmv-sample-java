@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -18,22 +18,20 @@
 
 package software.amazon.qldb.tutorial;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.List;
-
+import com.amazon.ion.IonValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.amazon.ion.IonValue;
-
 import software.amazon.qldb.QldbSession;
 import software.amazon.qldb.Result;
 import software.amazon.qldb.TransactionExecutor;
 import software.amazon.qldb.tutorial.model.SampleData;
 import software.amazon.qldb.tutorial.model.VehicleRegistration;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Query a table's history for a particular set of documents.
@@ -71,18 +69,14 @@ public final class QueryHistory {
     }
 
     public static void main(final String... args) {
-        try (QldbSession qldbSession = ConnectToLedger.createQldbSession()) {
-            final String threeMonthsAgo = Instant.now().minus(THREE_MONTHS, ChronoUnit.DAYS).toString();
-            final String query = String.format("SELECT data.Owners.PrimaryOwner, metadata.version "
-                    + "FROM history(VehicleRegistration, `%s`) "
-                    + "AS h WHERE h.metadata.id = ?", threeMonthsAgo);
-            qldbSession.execute(txn -> {
-                final String vin = SampleData.VEHICLES.get(0).getVin();
-                previousPrimaryOwners(txn, vin, query);
-            }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
-            log.info("Successfully queried history.");
-        } catch (Exception e) {
-            log.error("Unable to query history to find previous owners.", e);
-        }
+        final String threeMonthsAgo = Instant.now().minus(THREE_MONTHS, ChronoUnit.DAYS).toString();
+        final String query = String.format("SELECT data.Owners.PrimaryOwner, metadata.version "
+                                           + "FROM history(VehicleRegistration, `%s`) "
+                                           + "AS h WHERE h.metadata.id = ?", threeMonthsAgo);
+        ConnectToLedger.getDriver().execute(txn -> {
+            final String vin = SampleData.VEHICLES.get(0).getVin();
+            previousPrimaryOwners(txn, vin, query);
+        }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
+        log.info("Successfully queried history.");
     }
 }
