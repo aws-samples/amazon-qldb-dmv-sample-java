@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -18,22 +18,20 @@
 
 package software.amazon.qldb.tutorial;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.amazon.ion.IonValue;
 import com.fasterxml.jackson.dataformat.ion.IonObjectMapper;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.qldb.QldbSession;
 import software.amazon.qldb.Result;
 import software.amazon.qldb.TransactionExecutor;
 import software.amazon.qldb.tutorial.model.DriversLicense;
 import software.amazon.qldb.tutorial.model.Person;
 import software.amazon.qldb.tutorial.model.SampleData;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Register a new driver's license.
@@ -134,44 +132,39 @@ public final class RegisterDriversLicense {
     }
 
     public static void main(final String... args) {
-        try (QldbSession qldbSession = ConnectToLedger.createQldbSession()) {
-            final Person newPerson = new Person(
-                    "Kate",
-                    "Mulberry",
-                    SampleData.convertToLocalDate("1995-02-09"),
-                    "AQQ17B2342",
-                    "Passport",
-                    "22 Commercial Drive, Blaine, WA, 97722"
+        final Person newPerson = new Person(
+            "Kate",
+            "Mulberry",
+            SampleData.convertToLocalDate("1995-02-09"),
+            "AQQ17B2342",
+            "Passport",
+            "22 Commercial Drive, Blaine, WA, 97722"
+        );
+        ConnectToLedger.getDriver().execute(txn -> {
+            final String documentId;
+            final List<String> documentIdList;
+            try {
+                if (personAlreadyExists(txn, newPerson.getGovId())) {
+                    log.info("Person with this GovId already exists.");
+                    documentId = Person.getDocumentIdByGovId(txn, newPerson.getGovId());
+                } else {
+                    documentIdList = InsertDocument.insertDocuments(txn, Constants.PERSON_TABLE_NAME,
+                            Collections.singletonList(newPerson));
+                    documentId = documentIdList.get(0);
+                }
+            } catch (IOException ioe) {
+                throw new IllegalStateException(ioe);
+            }
+
+            final DriversLicense newLicense = new DriversLicense(
+                    documentId,
+                    "112 360 PXJ",
+                    "Full",
+                    SampleData.convertToLocalDate("2018-06-30"),
+                    SampleData.convertToLocalDate("2022-10-30")
             );
 
-            qldbSession.execute(txn -> {
-                final String documentId;
-                final List<String> documentIdList;
-                try {
-                    if (personAlreadyExists(txn, newPerson.getGovId())) {
-                        log.info("Person with this GovId already exists.");
-                        documentId = Person.getDocumentIdByGovId(txn, newPerson.getGovId());
-                    } else {
-                        documentIdList = InsertDocument.insertDocuments(txn, Constants.PERSON_TABLE_NAME,
-                                Collections.singletonList(newPerson));
-                        documentId = documentIdList.get(0);
-                    }
-                } catch (IOException ioe) {
-                    throw new IllegalStateException(ioe);
-                }
-
-                final DriversLicense newLicense = new DriversLicense(
-                        documentId,
-                        "112 360 PXJ",
-                        "Full",
-                        SampleData.convertToLocalDate("2018-06-30"),
-                        SampleData.convertToLocalDate("2022-10-30")
-                );
-
-                registerNewDriversLicense(txn, newPerson.getGovId(), newLicense, documentId);
-            }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
-        } catch (Exception e) {
-            log.error("Error registering new driver.", e);
-        }
+            registerNewDriversLicense(txn, newPerson.getGovId(), newLicense, documentId);
+        }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
     }
 }

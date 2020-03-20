@@ -25,7 +25,6 @@ import com.amazonaws.services.qldb.model.CreateLedgerResult;
 import com.amazonaws.services.qldb.model.DescribeLedgerResult;
 import com.amazonaws.services.qldb.model.LedgerState;
 import com.amazonaws.services.qldb.model.PermissionsMode;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

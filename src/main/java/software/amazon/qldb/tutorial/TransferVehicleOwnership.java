@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -32,7 +32,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import software.amazon.qldb.QldbSession;
 import software.amazon.qldb.Result;
 import software.amazon.qldb.TransactionExecutor;
 import software.amazon.qldb.tutorial.model.Owner;
@@ -65,8 +64,8 @@ public final class TransferVehicleOwnership {
         try {
             log.info("Finding person for documentId: {}...", documentId);
             final String query = "SELECT p.* FROM Person AS p BY pid WHERE pid = ?";
-            final List<IonValue> parameters = Collections.singletonList(Constants.MAPPER.writeValueAsIonValue(documentId));
-            Result result = txn.execute(query, parameters);
+
+            Result result = txn.execute(query, Constants.MAPPER.writeValueAsIonValue(documentId));
             if (result.isEmpty()) {
                 throw new IllegalStateException("Unable to find person with ID: " + documentId);
             }
@@ -145,20 +144,16 @@ public final class TransferVehicleOwnership {
         final String primaryOwnerGovId = SampleData.PEOPLE.get(0).getGovId();
         final String newPrimaryOwnerGovId = SampleData.PEOPLE.get(1).getGovId();
 
-        try (QldbSession qldbSession = ConnectToLedger.createQldbSession()) {
-            qldbSession.execute(txn -> {
-                final Person primaryOwner = findPrimaryOwnerForVehicle(txn, vin);
-                if (!primaryOwner.getGovId().equals(primaryOwnerGovId)) {
-                    // Verify the primary owner.
-                    throw new IllegalStateException("Incorrect primary owner identified for vehicle, unable to transfer.");
-                }
+        ConnectToLedger.getDriver().execute(txn -> {
+            final Person primaryOwner = findPrimaryOwnerForVehicle(txn, vin);
+            if (!primaryOwner.getGovId().equals(primaryOwnerGovId)) {
+                // Verify the primary owner.
+                throw new IllegalStateException("Incorrect primary owner identified for vehicle, unable to transfer.");
+            }
 
-                final String newOwner = Person.getDocumentIdByGovId(txn, newPrimaryOwnerGovId);
-                updateVehicleRegistration(txn, vin, newOwner);
-            }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
-            log.info("Successfully transferred vehicle ownership!");
-        } catch (Exception e) {
-            log.error("Error updating VehicleRegistration: ", e);
-        }
+            final String newOwner = Person.getDocumentIdByGovId(txn, newPrimaryOwnerGovId);
+            updateVehicleRegistration(txn, vin, newOwner);
+        }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
+        log.info("Successfully transferred vehicle ownership!");
     }
 }

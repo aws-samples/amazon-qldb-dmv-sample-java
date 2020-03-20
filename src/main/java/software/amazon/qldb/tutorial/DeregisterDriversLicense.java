@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -19,15 +19,12 @@
 package software.amazon.qldb.tutorial;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.amazon.ion.IonValue;
 
-import software.amazon.qldb.QldbSession;
 import software.amazon.qldb.Result;
 import software.amazon.qldb.TransactionExecutor;
 import software.amazon.qldb.tutorial.model.DriversLicense;
@@ -57,8 +54,8 @@ public final class DeregisterDriversLicense {
         try {
             log.info("De-registering license with license number: {}...", licenseNumber);
             final String query = "DELETE FROM DriversLicense AS d WHERE d.LicenseNumber = ?";
-            final List<IonValue> parameters = Collections.singletonList(Constants.MAPPER.writeValueAsIonValue(licenseNumber));
-            final Result result = txn.execute(query, parameters);
+
+            final Result result = txn.execute(query, Constants.MAPPER.writeValueAsIonValue(licenseNumber));
             if (!result.isEmpty()) {
                 log.info("Successfully de-registered license: {}.", licenseNumber);
             } else {
@@ -70,13 +67,9 @@ public final class DeregisterDriversLicense {
     }
 
     public static void main(final String... args) {
-        try (QldbSession qldbSession = ConnectToLedger.createQldbSession()) {
-            final DriversLicense license = SampleData.LICENSES.get(1);
-            qldbSession.execute(txn -> {
-                deregisterDriversLicense(txn, license.getLicenseNumber());
-            }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
-        } catch (Exception e) {
-            log.error("Error de-registering driver's license.", e);
-        }
+        final DriversLicense license = SampleData.LICENSES.get(1);
+        ConnectToLedger.getDriver().execute(txn -> {
+            deregisterDriversLicense(txn, license.getLicenseNumber());
+        }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
     }
 }

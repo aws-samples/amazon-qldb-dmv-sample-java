@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -19,15 +19,12 @@
 package software.amazon.qldb.tutorial;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.amazon.ion.IonValue;
 
-import software.amazon.qldb.QldbSession;
 import software.amazon.qldb.Result;
 import software.amazon.qldb.TransactionExecutor;
 import software.amazon.qldb.tutorial.model.Person;
@@ -58,8 +55,8 @@ public final class FindVehicles {
             final String documentId = Person.getDocumentIdByGovId(txn, govId);
             final String query = "SELECT v FROM Vehicle AS v INNER JOIN VehicleRegistration AS r "
                     + "ON v.VIN = r.VIN WHERE r.Owners.PrimaryOwner.PersonId = ?";
-            final List<IonValue> parameters = Collections.singletonList(Constants.MAPPER.writeValueAsIonValue(documentId));
-            final Result result = txn.execute(query, parameters);
+
+            final Result result = txn.execute(query, Constants.MAPPER.writeValueAsIonValue(documentId));
             log.info("List of Vehicles for owner with GovId: {}...", govId);
             ScanTable.printDocuments(result);
         } catch (IOException ioe) {
@@ -68,13 +65,9 @@ public final class FindVehicles {
     }
 
     public static void main(final String... args) {
-        try (QldbSession qldbSession = ConnectToLedger.createQldbSession()) {
-            final Person person = SampleData.PEOPLE.get(0);
-            qldbSession.execute(txn -> {
-                findVehiclesForOwner(txn, person.getGovId());
-            }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
-        } catch (Exception e) {
-            log.error("Error getting vehicles for owner.", e);
-        }
+        final Person person = SampleData.PEOPLE.get(0);
+        ConnectToLedger.getDriver().execute(txn -> {
+            findVehiclesForOwner(txn, person.getGovId());
+        }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
     }
 }

@@ -18,11 +18,11 @@
 
 package software.amazon.qldb.tutorial.qldb;
 
-import java.util.List;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Information about the transaction. Contains all the statements executed as

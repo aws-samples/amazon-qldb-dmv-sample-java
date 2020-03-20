@@ -18,16 +18,15 @@
 
 package software.amazon.qldb.tutorial.model;
 
-import java.time.LocalDate;
-
 import com.amazon.ion.Decimal;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 import software.amazon.qldb.TransactionExecutor;
 import software.amazon.qldb.tutorial.Constants;
+
+import java.time.LocalDate;
 
 /**
  * Represents a vehicle registration, serializable to (and from) Ion.

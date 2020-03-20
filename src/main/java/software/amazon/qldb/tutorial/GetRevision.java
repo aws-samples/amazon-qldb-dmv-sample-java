@@ -18,28 +18,18 @@
 
 package software.amazon.qldb.tutorial;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonStruct;
-import com.amazon.ion.IonSystem;
 import com.amazon.ion.IonValue;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
-import com.amazon.ion.system.IonSystemBuilder;
 import com.amazonaws.services.qldb.AmazonQLDB;
 import com.amazonaws.services.qldb.model.GetDigestResult;
 import com.amazonaws.services.qldb.model.GetRevisionRequest;
 import com.amazonaws.services.qldb.model.GetRevisionResult;
 import com.amazonaws.services.qldb.model.ValueHolder;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.qldb.QldbSession;
 import software.amazon.qldb.Result;
 import software.amazon.qldb.TransactionExecutor;
@@ -47,6 +37,12 @@ import software.amazon.qldb.tutorial.model.SampleData;
 import software.amazon.qldb.tutorial.qldb.BlockAddress;
 import software.amazon.qldb.tutorial.qldb.QldbRevision;
 import software.amazon.qldb.tutorial.qldb.QldbStringUtils;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Verify the integrity of a document revision in a QLDB ledger.
@@ -57,7 +53,6 @@ import software.amazon.qldb.tutorial.qldb.QldbStringUtils;
 public final class GetRevision {
     public static final Logger log = LoggerFactory.getLogger(GetRevision.class);
     public static AmazonQLDB client = CreateLedger.getClient();
-    private static final IonSystem SYSTEM = IonSystemBuilder.standard().build();
 
     private GetRevision() { }
 
@@ -125,7 +120,7 @@ public final class GetRevision {
                 final IonReader reader = IonReaderBuilder.standard().build(proof);
                 reader.next();
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                IonWriter writer = SYSTEM.newBinaryWriter(baos);
+                IonWriter writer = Constants.SYSTEM.newBinaryWriter(baos);
                 writer.writeValue(reader);
                 writer.close();
                 baos.flush();

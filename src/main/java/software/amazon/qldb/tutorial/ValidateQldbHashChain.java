@@ -22,17 +22,15 @@ import com.amazonaws.services.qldb.model.ExportJournalToS3Result;
 import com.amazonaws.services.qldb.model.S3EncryptionConfiguration;
 import com.amazonaws.services.qldb.model.S3ObjectEncryptionType;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.List;
-
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import software.amazon.qldb.tutorial.qldb.JournalBlock;
+
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Validate the hash chain of a QLDB ledger by stepping through its S3 export.

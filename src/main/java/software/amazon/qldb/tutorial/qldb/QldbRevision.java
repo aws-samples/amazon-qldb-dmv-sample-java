@@ -18,16 +18,6 @@
 
 package software.amazon.qldb.tutorial.qldb;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Objects;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.amazon.ion.IonBlob;
 import com.amazon.ion.IonInt;
 import com.amazon.ion.IonReader;
@@ -44,9 +34,17 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.ion.IonTimestampSerializers;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.qldb.tutorial.Constants;
 import software.amazon.qldb.tutorial.Verifier;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.ZoneId;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Objects;
 
 /**
  * Represents a QldbRevision including both user data and metadata.

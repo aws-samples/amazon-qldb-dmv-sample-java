@@ -18,17 +18,16 @@
 
 package software.amazon.qldb.tutorial.qldb;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.ion.IonTimestampSerializers;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Represents a JournalBlock that was recorded after executing a transaction

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -18,18 +18,16 @@
 
 package software.amazon.qldb.tutorial;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
+import com.amazon.ion.IonStruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.amazon.ion.IonStruct;
-
 import software.amazon.qldb.QldbSession;
 import software.amazon.qldb.Result;
 import software.amazon.qldb.TransactionExecutor;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Scan for all the documents in a table.
@@ -94,18 +92,14 @@ public final class ScanTable {
     }
 
     public static void main(final String... args) {
-        try (QldbSession qldbSession = ConnectToLedger.createQldbSession()) {
-            qldbSession.execute(txn -> {
-                List<String> tableNames = scanTableForDocuments(txn, Constants.USER_TABLES)
-                    .stream()
-                    .map((s) -> s.get("name").toString())
-                    .collect(Collectors.toList());
-                for (String tableName : tableNames) {
-                    scanTableForDocuments(txn, tableName);
-                }
-            }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
-        } catch (Exception e) {
-            log.error("Unable to scan tables.", e);
-        }
+        ConnectToLedger.getDriver().execute(txn -> {
+            List<String> tableNames = scanTableForDocuments(txn, Constants.USER_TABLES)
+                .stream()
+                .map((s) -> s.get("name").toString())
+                .collect(Collectors.toList());
+            for (String tableName : tableNames) {
+                scanTableForDocuments(txn, tableName);
+            }
+        }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
     }
 }

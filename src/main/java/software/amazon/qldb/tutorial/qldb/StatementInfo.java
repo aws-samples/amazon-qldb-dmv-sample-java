@@ -18,13 +18,13 @@
 
 package software.amazon.qldb.tutorial.qldb;
 
-import java.util.Arrays;
-import java.util.Date;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.ion.IonTimestampSerializers;
+
+import java.util.Arrays;
+import java.util.Date;
 
 /**
  * Contains information about an individual statement run as part of a transaction.
