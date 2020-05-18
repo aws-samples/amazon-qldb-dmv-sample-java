@@ -24,6 +24,15 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.ion.IonTimestampSerializers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.qldb.tutorial.Constants;
+import software.amazon.qldb.tutorial.Verifier;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.nio.ByteBuffer.wrap;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -107,16 +116,16 @@ public final class JournalBlock {
     @Override
     public String toString() {
         return "JournalBlock{"
-            + "blockAddress=" + blockAddress
-            + ", transactionId='" + transactionId + '\''
-            + ", blockTimestamp=" + blockTimestamp
-            + ", blockHash=" + Arrays.toString(blockHash)
-            + ", entriesHash=" + Arrays.toString(entriesHash)
-            + ", previousBlockHash=" + Arrays.toString(previousBlockHash)
-            + ", entriesHashList=" + Arrays.toString(entriesHashList)
-            + ", transactionInfo=" + transactionInfo
-            + ", revisions=" + revisions
-            + '}';
+                + "blockAddress=" + blockAddress
+                + ", transactionId='" + transactionId + '\''
+                + ", blockTimestamp=" + blockTimestamp
+                + ", blockHash=" + Arrays.toString(blockHash)
+                + ", entriesHash=" + Arrays.toString(entriesHash)
+                + ", previousBlockHash=" + Arrays.toString(previousBlockHash)
+                + ", entriesHashList=" + Arrays.toString(entriesHashList)
+                + ", transactionInfo=" + transactionInfo
+                + ", revisions=" + revisions
+                + '}';
     }
 
     @Override
@@ -169,5 +178,84 @@ public final class JournalBlock {
         result = 31 * result + getTransactionInfo().hashCode();
         result = 31 * result + (getRevisions() != null ? getRevisions().hashCode() : 0);
         return result;
+    }
+
+    /**
+     * This method validates that the hashes of the components of a journal block make up the block
+     * hash that is provided with the block itself.
+     *
+     * The components that contribute to the hash of the journal block consist of the following:
+     *   - user transaction information (contained in [transactionInfo])
+     *   - user revisions (contained in [revisions])
+     *   - hashes of internal-only system metadata (contained in [revisions] and in [entriesHashList])
+     *   - the previous block hash
+     *
+     * If any of the computed hashes of user information cannot be validated or any of the system
+     * hashes do not result in the correct computed values, this method will throw an IllegalArgumentException.
+     *
+     * Internal-only system metadata is represented by its hash, and can be present in the form of certain
+     * items in the [revisions] list that only contain a hash and no user data, as well as some hashes
+     * in [entriesHashList].
+     *
+     * To validate that the hashes of the user data are valid components of the [blockHash], this method
+     * performs the following steps:
+     *
+     * 1. Compute the hash of the [transactionInfo] and validate that it is included in the [entriesHashList].
+     * 2. Validate the hash of each user revision was correctly computed and matches the hash published
+     * with that revision.
+     * 3. Compute the hash of the [revisions] by treating the revision hashes as the leaf nodes of a Merkle tree
+     * and calculating the root hash of that tree. Then validate that hash is included in the [entriesHashList].
+     * 4. Compute the hash of the [entriesHashList] by treating the hashes as the leaf nodes of a Merkle tree
+     * and calculating the root hash of that tree. Then validate that hash matches [entriesHash].
+     * 5. Finally, compute the block hash by computing the hash resulting from concatenating the [entriesHash]
+     * and previous block hash, and validate that the result matches the [blockHash] provided by QLDB with the block.
+     *
+     * This method is called by ValidateQldbHashChain::verify for each journal block to validate its
+     * contents before verifying that the hash chain between consecutive blocks is correct.
+     */
+    public void verifyBlockHash() {
+        Set<ByteBuffer> entriesHashSet = new HashSet<>();
+        Arrays.stream(entriesHashList).forEach(hash -> entriesHashSet.add(wrap(hash).asReadOnlyBuffer()));
+
+        byte[] computedTransactionInfoHash = computeTransactionInfoHash();
+        if (!entriesHashSet.contains(wrap(computedTransactionInfoHash).asReadOnlyBuffer())) {
+            throw new IllegalArgumentException(
+                    "Block transactionInfo hash is not contained in the QLDB block entries hash list.");
+        }
+
+        if (revisions != null) {
+            revisions.forEach(QldbRevision::verifyRevisionHash);
+            byte[] computedRevisionsHash = computeRevisionsHash();
+            if (!entriesHashSet.contains(wrap(computedRevisionsHash).asReadOnlyBuffer())) {
+                throw new IllegalArgumentException(
+                        "Block revisions list hash is not contained in the QLDB block entries hash list.");
+            }
+        }
+
+        byte[] computedEntriesHash = computeEntriesHash();
+        if (!Arrays.equals(computedEntriesHash, entriesHash)) {
+            throw new IllegalArgumentException("Computed entries hash does not match entries hash provided in the block.");
+        }
+
+        byte[] computedBlockHash = Verifier.dot(computedEntriesHash, previousBlockHash);
+        if (!Arrays.equals(computedBlockHash, blockHash)) {
+            throw new IllegalArgumentException("Computed block hash does not match block hash provided in the block.");
+        }
+    }
+
+    private byte[] computeTransactionInfoHash() {
+        try {
+            return QldbIonUtils.hashIonValue(Constants.MAPPER.writeValueAsIonValue(transactionInfo));
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Could not compute transactionInfo hash to verify block hash.", e);
+        }
+    }
+
+    private byte[] computeRevisionsHash() {
+        return Verifier.calculateMerkleTreeRootHash(revisions.stream().map(QldbRevision::getHash).collect(Collectors.toList()));
+    }
+
+    private byte[] computeEntriesHash() {
+        return Verifier.calculateMerkleTreeRootHash(Arrays.asList(entriesHashList));
     }
 }

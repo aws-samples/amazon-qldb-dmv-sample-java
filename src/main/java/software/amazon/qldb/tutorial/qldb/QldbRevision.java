@@ -19,31 +19,16 @@
 package software.amazon.qldb.tutorial.qldb;
 
 import com.amazon.ion.IonBlob;
-import com.amazon.ion.IonInt;
-import com.amazon.ion.IonReader;
-import com.amazon.ion.IonString;
 import com.amazon.ion.IonStruct;
-import com.amazon.ion.IonSystem;
-import com.amazon.ion.IonTimestamp;
-import com.amazon.ion.IonValue;
-import com.amazon.ion.system.IonSystemBuilder;
-import com.amazon.ionhash.IonHashReader;
-import com.amazon.ionhash.IonHashReaderBuilder;
-import com.amazon.ionhash.MessageDigestIonHasherProvider;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.dataformat.ion.IonTimestampSerializers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.qldb.tutorial.Constants;
 import software.amazon.qldb.tutorial.Verifier;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.time.ZoneId;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.Objects;
 
 /**
@@ -51,139 +36,15 @@ import java.util.Objects;
  */
 public final class QldbRevision {
     private static final Logger log = LoggerFactory.getLogger(QldbRevision.class);
-    private static final IonSystem SYSTEM = IonSystemBuilder.standard().build();
-    private static MessageDigestIonHasherProvider ionHasherProvider = new MessageDigestIonHasherProvider("SHA-256");
-    private static final ZoneId UTC = ZoneId.of("UTC");
-    private static final BigDecimal ONE_THOUSAND = BigDecimal.valueOf(1000L);
-
-    /**
-     * Represents the metadata field of a QLDB Document
-     */
-    public static class Metadata {
-        private final String id;
-        private final long version;
-        @JsonSerialize(using = IonTimestampSerializers.IonTimestampJavaDateSerializer.class)
-        private final Date txTime;
-        private final String txId;
-
-        @JsonCreator
-        public Metadata(@JsonProperty("id") final String id,
-                        @JsonProperty("version") final long version,
-                        @JsonProperty("txTime") final Date txTime,
-                        @JsonProperty("txId") final String txId) {
-            this.id = id;
-            this.version = version;
-            this.txTime = txTime;
-            this.txId = txId;
-        }
-
-        /**
-         * Gets the unique ID of a QLDB document.
-         *
-         * @return the document ID.
-         */
-        public String getId() {
-            return id;
-        }
-
-        /**
-         * Gets the version number of the document in the document's modification history.
-         * @return the version number.
-         */
-        public long getVersion() {
-            return version;
-        }
-
-        /**
-         * Gets the time during which the document was modified.
-         *
-         * @return the transaction time.
-         */
-        public Date getTxTime() {
-            return txTime;
-        }
-
-        /**
-         * Gets the transaction ID associated with this document.
-         *
-         * @return the transaction ID.
-         */
-        public String getTxId() {
-            return txId;
-        }
-
-        public static Metadata fromIon(final IonStruct ionStruct) {
-            if (ionStruct == null) {
-                throw new IllegalArgumentException("Metadata cannot be null");
-            }
-            try {
-                IonString id = (IonString) ionStruct.get("id");
-                IonInt version = (IonInt) ionStruct.get("version");
-                IonTimestamp txTime = (IonTimestamp) ionStruct.get("txTime");
-                IonString txId = (IonString) ionStruct.get("txId");
-                if (id == null || version == null || txTime == null || txId == null) {
-                    throw new IllegalArgumentException("Document is missing required fields");
-                }
-                return new Metadata(id.stringValue(), version.longValue(), new Date(txTime.getMillis()), txId.stringValue());
-            } catch (ClassCastException e) {
-                log.error("Failed to parse ion document");
-                throw new IllegalArgumentException("Document members are not of the correct type", e);
-            }
-        }
-
-        /**
-         * Converts a {@link Metadata} object to a string.
-         *
-         * @return the string representation of the {@link QldbRevision} object.
-         */
-        @Override
-        public String toString() {
-            return "Metadata{"
-                    + "id='" + id + '\''
-                    + ", version=" + version
-                    + ", txTime=" + txTime
-                    + ", txId='" + txId
-                    + '\''
-                    + '}';
-        }
-
-        /**
-         * Check whether two {@link Metadata} objects are equivalent.
-         *
-         * @return {@code true} if the two objects are equal, {@code false} otherwise.
-         */
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) { return true; }
-            if (o == null || getClass() != o.getClass()) { return false; }
-            Metadata metadata = (Metadata) o;
-            return version == metadata.version
-                    && id.equals(metadata.id)
-                    && txTime.equals(metadata.txTime)
-                    && txId.equals(metadata.txId);
-        }
-
-        /**
-         * Generate a hash code for the {@link Metadata} object.
-         *
-         * @return the hash code.
-         */
-        @Override
-        public int hashCode() {
-            // CHECKSTYLE:OFF - Disabling as we are generating a hashCode of multiple properties.
-            return Objects.hash(id, version, txTime, txId);
-            // CHECKSTYLE:ON
-        }
-    }
 
     private final BlockAddress blockAddress;
-    private final Metadata metadata;
+    private final RevisionMetadata metadata;
     private final byte[] hash;
     private final IonStruct data;
 
     @JsonCreator
     public QldbRevision(@JsonProperty("blockAddress") final BlockAddress blockAddress,
-                        @JsonProperty("metadata") final Metadata metadata,
+                        @JsonProperty("metadata") final RevisionMetadata metadata,
                         @JsonProperty("hash") final byte[] hash,
                         @JsonProperty("data") final IonStruct data) {
         this.blockAddress = blockAddress;
@@ -204,9 +65,9 @@ public final class QldbRevision {
     /**
      * Gets the metadata of the revision.
      *
-     * @return the {@link Metadata} object.
+     * @return the {@link RevisionMetadata} object.
      */
-    public Metadata getMetadata() {
+    public RevisionMetadata getMetadata() {
         return metadata;
     }
 
@@ -234,7 +95,7 @@ public final class QldbRevision {
      * The specified {@link IonStruct} must include the following fields
      *
      * - blockAddress -- a {@link BlockAddress},
-     * - metadata -- a {@link Metadata},
+     * - metadata -- a {@link RevisionMetadata},
      * - hash -- the document's hash calculated by QLDB,
      * - data -- an {@link IonStruct} containing user data in the document.
      *
@@ -257,49 +118,13 @@ public final class QldbRevision {
             if (hash == null || data == null) {
                 throw new IllegalArgumentException("Document is missing required fields");
             }
-            byte[] candidateHash = computeHash(metadataStruct, data);
-            if (!Arrays.equals(candidateHash, hash.getBytes())) {
-                throw new IllegalArgumentException("Hash entry of QLDB revision and computed hash "
-                                                           + "of QLDB revision do not match");
-            }
-            Metadata metadata = Metadata.fromIon(metadataStruct);
+            verifyRevisionHash(metadataStruct, data, hash.getBytes());
+            RevisionMetadata metadata = RevisionMetadata.fromIon(metadataStruct);
             return new QldbRevision(blockAddress, metadata, hash.getBytes(), data);
         } catch (ClassCastException e) {
             log.error("Failed to parse ion document");
             throw new IllegalArgumentException("Document members are not of the correct type", e);
         }
-    }
-
-    /**
-     * Calculate the digest of two QLDB hashes.
-     *
-     * @param metadata
-     *              The metadata portion of a document.
-     * @param data
-     *              The data portion of a document.
-     * @return the converted {@link QldbRevision} object.
-     */
-    public static byte[] computeHash(final IonStruct metadata, final IonStruct data) {
-        byte[] metaDataHash = hashIonValue(metadata);
-        byte[] dataHash = hashIonValue(data);
-        return Verifier.joinHashesPairwise(metaDataHash, dataHash);
-    }
-
-    /**
-     * Builds a hash value from the given {@link IonValue}.
-     *
-     * @param ionValue
-     *              The {@link IonValue} to hash.
-     * @return a byte array representing the hash value.
-     */
-    private static byte[] hashIonValue(final IonValue ionValue) {
-        IonReader reader = SYSTEM.newReader(ionValue);
-        IonHashReader hashReader = IonHashReaderBuilder.standard()
-                .withHasherProvider(ionHasherProvider)
-                .withReader(reader)
-                .build();
-        while (hashReader.next() != null) {  }
-        return hashReader.digest();
     }
 
     /**
@@ -348,5 +173,36 @@ public final class QldbRevision {
         // CHECKSTYLE:ON
         result = 31 * result + Arrays.hashCode(hash);
         return result;
+    }
+
+    /**
+     * Throws an IllegalArgumentException if the hash of the revision data and metadata
+     * does not match the hash provided by QLDB with the revision.
+     */
+    public void verifyRevisionHash() {
+        // Certain internal-only system revisions only contain a hash which cannot be
+        // further computed. However, these system hashes still participate to validate
+        // the journal block. User revisions will always contain values for all fields
+        // and can therefore have their hash computed.
+        if (blockAddress == null && metadata == null && data == null) {
+            return;
+        }
+
+        try {
+            IonStruct metadataIon = (IonStruct) Constants.MAPPER.writeValueAsIonValue(metadata);
+            verifyRevisionHash(metadataIon, data, hash);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Could not encode revision metadata to ion.", e);
+        }
+    }
+
+    private static void verifyRevisionHash(IonStruct metadata, IonStruct revisionData, byte[] expectedHash) {
+        byte[] metadataHash = QldbIonUtils.hashIonValue(metadata);
+        byte[] dataHash = QldbIonUtils.hashIonValue(revisionData);
+        byte[] candidateHash = Verifier.dot(metadataHash, dataHash);
+        if (!Arrays.equals(candidateHash, expectedHash)) {
+            throw new IllegalArgumentException("Hash entry of QLDB revision and computed hash "
+                    + "of QLDB revision do not match");
+        }
     }
 }

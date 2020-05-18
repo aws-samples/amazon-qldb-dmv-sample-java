@@ -19,6 +19,7 @@
 package software.amazon.qldb.tutorial.qldb;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.Map;
  * part of the transaction and mapping between the documents to
  * tableName/tableId which were updated as part of the transaction.
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class TransactionInfo {
 
     private List<StatementInfo> statements;

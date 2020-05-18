@@ -20,11 +20,12 @@ package software.amazon.qldb.tutorial.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import software.amazon.qldb.tutorial.model.streams.RevisionData;
 
 /**
  * Represents a vehicle, serializable to (and from) Ion.
  */
-public final class Vehicle {
+public final class Vehicle implements RevisionData {
     private final String vin;
     private final String type;
     private final int year;
@@ -75,5 +76,17 @@ public final class Vehicle {
     @JsonProperty("Year")
     public int getYear() {
         return year;
+    }
+
+    @Override
+    public String toString() {
+        return "Vehicle{" +
+                "vin='" + vin + '\'' +
+                ", type='" + type + '\'' +
+                ", year=" + year +
+                ", make='" + make + '\'' +
+                ", model='" + model + '\'' +
+                ", color='" + color + '\'' +
+                '}';
     }
 }

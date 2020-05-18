@@ -30,6 +30,7 @@ import com.fasterxml.jackson.dataformat.ion.ionvalue.IonValueMapper;
 public final class Constants {
     public static final int RETRY_LIMIT = 4;
     public static final String LEDGER_NAME = "vehicle-registration";
+    public static final String STREAM_NAME = "vehicle-registration-stream";
     public static final String VEHICLE_REGISTRATION_TABLE_NAME = "VehicleRegistration";
     public static final String VEHICLE_TABLE_NAME = "Vehicle";
     public static final String PERSON_TABLE_NAME = "Person";
@@ -42,8 +43,8 @@ public final class Constants {
     public static final String JOURNAL_EXPORT_S3_BUCKET_NAME_PREFIX = "qldb-tutorial-journal-export";
     public static final String USER_TABLES = "information_schema.user_tables";
     public static final String LEDGER_NAME_WITH_TAGS = "tags";
-    public static final IonObjectMapper MAPPER = new IonValueMapper(IonSystemBuilder.standard().build());
     public static final IonSystem SYSTEM = IonSystemBuilder.standard().build();
+    public static final IonObjectMapper MAPPER = new IonValueMapper(SYSTEM);
 
     private Constants() { }
 

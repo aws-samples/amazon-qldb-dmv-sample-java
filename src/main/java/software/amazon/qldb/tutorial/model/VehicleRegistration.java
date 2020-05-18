@@ -18,25 +18,27 @@
 
 package software.amazon.qldb.tutorial.model;
 
-import com.amazon.ion.Decimal;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import software.amazon.qldb.TransactionExecutor;
 import software.amazon.qldb.tutorial.Constants;
+import software.amazon.qldb.tutorial.model.streams.RevisionData;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
  * Represents a vehicle registration, serializable to (and from) Ion.
  */ 
-public final class VehicleRegistration {
+public final class VehicleRegistration implements RevisionData {
+
     private final String vin;
     private final String licensePlateNumber;
     private final String state;
     private final String city;
-    private final Decimal pendingPenaltyTicketAmount;
+    private final BigDecimal pendingPenaltyTicketAmount;
     private final LocalDate validFromDate;
     private final LocalDate validToDate;
     private final Owners owners;
@@ -46,7 +48,7 @@ public final class VehicleRegistration {
                                @JsonProperty("LicensePlateNumber") final String licensePlateNumber,
                                @JsonProperty("State") final String state,
                                @JsonProperty("City") final String city,
-                               @JsonProperty("PendingPenaltyTicketAmount") final Decimal pendingPenaltyTicketAmount,
+                               @JsonProperty("PendingPenaltyTicketAmount") final BigDecimal pendingPenaltyTicketAmount,
                                @JsonProperty("ValidFromDate") final LocalDate validFromDate,
                                @JsonProperty("ValidToDate") final LocalDate validToDate,
                                @JsonProperty("Owners") final Owners owners) {
@@ -76,7 +78,7 @@ public final class VehicleRegistration {
     }
 
     @JsonProperty("PendingPenaltyTicketAmount")
-    public Decimal getPendingPenaltyTicketAmount() {
+    public BigDecimal getPendingPenaltyTicketAmount() {
         return pendingPenaltyTicketAmount;
     }
 
@@ -115,5 +117,19 @@ public final class VehicleRegistration {
      */
     public static String getDocumentIdByVin(final TransactionExecutor txn, final String vin) {
         return SampleData.getDocumentId(txn, Constants.VEHICLE_REGISTRATION_TABLE_NAME, "VIN", vin);
+    }
+
+    @Override
+    public String toString() {
+        return "VehicleRegistration{" +
+                "vin='" + vin + '\'' +
+                ", licensePlateNumber='" + licensePlateNumber + '\'' +
+                ", state='" + state + '\'' +
+                ", city='" + city + '\'' +
+                ", pendingPenaltyTicketAmount=" + pendingPenaltyTicketAmount +
+                ", validFromDate=" + validFromDate +
+                ", validToDate=" + validToDate +
+                ", owners=" + owners +
+                '}';
     }
 }

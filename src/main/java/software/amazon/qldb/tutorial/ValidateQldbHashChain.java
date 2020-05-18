@@ -63,8 +63,8 @@ public final class ValidateQldbHashChain {
         S3EncryptionConfiguration encryptionConfiguration = new S3EncryptionConfiguration()
                 .withObjectEncryptionType(S3ObjectEncryptionType.SSE_S3);
         ExportJournalToS3Result exportJournalToS3Result = 
-            ExportJournal.createJournalExportAndAwaitCompletion(Constants.LEDGER_NAME, 
-                    bucketName, prefix, null, encryptionConfiguration);
+            ExportJournal.createJournalExportAndAwaitCompletion(Constants.LEDGER_NAME,
+                    bucketName, prefix, null, encryptionConfiguration, ExportJournal.DEFAULT_EXPORT_TIMEOUT_MS);
 
         return exportJournalToS3Result.getExportId();
     }
@@ -82,11 +82,12 @@ public final class ValidateQldbHashChain {
         }
 
         journalBlocks.stream().reduce(null, (previousJournalBlock, journalBlock) -> {
+            journalBlock.verifyBlockHash();
             if (previousJournalBlock == null) { return journalBlock; }
             if (!Arrays.equals(previousJournalBlock.getBlockHash(), journalBlock.getPreviousBlockHash())) {
                 throw new IllegalStateException("Previous block hash doesn't match.");
             }
-            byte[] blockHash = Verifier.joinHashesPairwise(journalBlock.getEntriesHash(), previousJournalBlock.getBlockHash());
+            byte[] blockHash = Verifier.dot(journalBlock.getEntriesHash(), previousJournalBlock.getBlockHash());
             if (!Arrays.equals(blockHash, journalBlock.getBlockHash())) {
                 throw new IllegalStateException("Block hash doesn't match entriesHash dot previousBlockHash, the chain is "
                         + "broken.");
