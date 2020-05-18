@@ -16,29 +16,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package software.amazon.qldb.tutorial.model;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
+package software.amazon.qldb.tutorial.model.streams;
 
 /**
- * Represents a vehicle owner, serializable to (and from) Ion.
- */ 
-public final class Owner {
-    private final String personId;
-
-    public Owner(@JsonProperty("PersonId") final String personId) {
-        this.personId = personId;
-    }
-
-    @JsonProperty("PersonId")
-    public String getPersonId() {
-        return personId;
-    }
-
-    @Override
-    public String toString() {
-        return "Owner{" +
-                "personId='" + personId + '\'' +
-                '}';
-    }
-}
+ * Allows modeling the content of all revisions as a generic revision data. Used
+ * in the {@link Revision} and extended by domain models in {@link
+ * software.amazon.qldb.tutorial.model} to make it easier to write the {@link
+ * Revision.RevisionDataDeserializer} that must deserialize the {@link
+ * Revision#data} from different domain models.
+ */
+public interface RevisionData { }

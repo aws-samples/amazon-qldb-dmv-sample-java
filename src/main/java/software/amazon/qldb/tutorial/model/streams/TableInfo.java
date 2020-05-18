@@ -16,30 +16,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package software.amazon.qldb.tutorial.qldb;
+package software.amazon.qldb.tutorial.model.streams;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
+import java.util.Objects;
 
 /**
- * Information about an individual document in a table and the transactions associated with that document
- * in the given JournalBlock.
+ * Represents the table information that goes inside the {@link
+ * RevisionDetailsRecord}. It allows the users to deserialize the {@link
+ * Revision#data} appropriate to the underlying table.
  */
-public class DocumentInfo {
-
-    private String tableName;
+public final class TableInfo {
     private String tableId;
-    private List<Integer> statementIndexList;
+    private String tableName;
 
     @JsonCreator
-    public DocumentInfo(@JsonProperty("tableName") final String tableName,
-                        @JsonProperty("tableId") final String tableId,
-                        @JsonProperty("statements") final List<Integer> statementIndexList) {
-        this.tableName = tableName;
+    public TableInfo(@JsonProperty("tableId") String tableId, @JsonProperty("tableName") String tableName) {
         this.tableId = tableId;
-        this.statementIndexList = statementIndexList;
+        this.tableName = tableName;
     }
 
     public String getTableName() {
@@ -50,44 +46,35 @@ public class DocumentInfo {
         return tableId;
     }
 
-    @JsonProperty("statements")
-    public List<Integer> getStatementIndexList() {
-        return statementIndexList;
+    @Override
+    public String toString() {
+        return "TableInfo{" +
+                "tableId='" + tableId + '\'' +
+                ", tableName='" + tableName + '\'' +
+                '}';
     }
 
     @Override
-    public boolean equals(final Object o) {
+    public boolean equals(Object o) {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof DocumentInfo)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
 
-        final DocumentInfo that = (DocumentInfo) o;
+        TableInfo tableInfo = (TableInfo) o;
 
-        if (!getTableName().equals(that.getTableName())) {
+        if (!Objects.equals(tableId, tableInfo.tableId)) {
             return false;
         }
-        if (!getTableId().equals(that.getTableId())) {
-            return false;
-        }
-        return getStatementIndexList().equals(that.getStatementIndexList());
+        return Objects.equals(tableName, tableInfo.tableName);
     }
 
     @Override
     public int hashCode() {
-        int result = getTableName().hashCode();
-        result = 31 * result + getTableId().hashCode();
-        result = 31 * result + getStatementIndexList().hashCode();
+        int result = tableId != null ? tableId.hashCode() : 0;
+        result = 31 * result + (tableName != null ? tableName.hashCode() : 0);
         return result;
-    }
-
-    @Override
-    public String toString() {
-        return "DocumentInfo{"
-            + "tableName='" + tableName + '\''
-            + ", tableId='" + tableId + '\''
-            + ", statementIndexList=" + statementIndexList + '}';
     }
 }

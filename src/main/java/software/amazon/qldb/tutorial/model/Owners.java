@@ -44,4 +44,12 @@ public final class Owners {
     public List<Owner> getSecondaryOwners() {
         return secondaryOwners;
     }
+
+    @Override
+    public String toString() {
+        return "Owners{" +
+                "primaryOwner=" + primaryOwner +
+                ", secondaryOwners=" + secondaryOwners +
+                '}';
+    }
 }

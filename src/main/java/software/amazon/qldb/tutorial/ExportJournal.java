@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.time.Duration;
 
 /**
  * Export a journal to S3.
@@ -100,12 +101,15 @@ public final class ExportJournal {
 
     public static AmazonQLDB client = getClient();
 
+    static final Long DEFAULT_EXPORT_TIMEOUT_MS = Duration.ofMinutes(10).toMillis();
+
     private static final String POLICY_TEMPLATE =
                     "{" +
                     "   \"Version\" : \"2012-10-17\"," +
                     "   \"Statement\": [ {statements} ]" +
                     "}";
-    private static final String ASSUME_ROLE_POLICY =
+
+    public static String ASSUME_ROLE_POLICY =
             POLICY_TEMPLATE.replace("{statements}",
                     "   {" +
                             "       \"Effect\": \"Allow\"," +
@@ -134,8 +138,6 @@ public final class ExportJournal {
     private static final String EXPORT_ROLE_NAME = "QLDBTutorialJournalExportRole";
     private static final String EXPORT_ROLE_POLICY_NAME = "QLDBTutorialJournalExportRolePolicy";
 
-    // Wait for more than 5 minutes for export to complete - 40 * 10 = 400Seconds.
-    private static final int MAX_RETRY_COUNT = 40;
     private static final Long EXPORT_COMPLETION_POLL_PERIOD_MS = 10_000L;
     private static final Long JOURNAL_EXPORT_TIME_WINDOW_MINUTES = 10L;
 
@@ -176,7 +178,7 @@ public final class ExportJournal {
                             .withKmsKeyArn(kmsArn);
         }
         createJournalExportAndAwaitCompletion(Constants.LEDGER_NAME, s3BucketName, Constants.LEDGER_NAME + "/",
-                roleArn, s3EncryptionConfiguration);
+                roleArn, s3EncryptionConfiguration, DEFAULT_EXPORT_TIMEOUT_MS);
     }
 
     /**
@@ -192,13 +194,16 @@ public final class ExportJournal {
      *              The IAM role ARN to be used when exporting the journal.
      * @param encryptionConfiguration
      *              The encryption settings to be used by the export job to write data in the given S3 bucket.
+     * @param awaitTimeoutMs
+     *              Milliseconds to wait for export to complete.
      * @return {@link ExportJournalToS3Result} from QLDB.
      * @throws InterruptedException if thread is being interrupted while waiting for the export to complete.
      */
     public static ExportJournalToS3Result createJournalExportAndAwaitCompletion(
             String ledgerName, String s3BucketName,
             String s3Prefix, String roleArn,
-            S3EncryptionConfiguration encryptionConfiguration) throws InterruptedException {
+            S3EncryptionConfiguration encryptionConfiguration,
+            long awaitTimeoutMs) throws InterruptedException {
         AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
         createS3BucketIfNotExists(s3BucketName, s3Client);
         if (roleArn == null) {
@@ -214,7 +219,7 @@ public final class ExportJournal {
                     s3Prefix, encryptionConfiguration, roleArn);
 
             // Wait for export to complete.
-            waitForExportToComplete(Constants.LEDGER_NAME, exportJournalToS3Result.getExportId());
+            waitForExportToComplete(Constants.LEDGER_NAME, exportJournalToS3Result.getExportId(), awaitTimeoutMs);
             log.info("JournalS3Export for exportId " + exportJournalToS3Result.getExportId() + " is completed.");
             return exportJournalToS3Result;
         } catch (Exception e) {
@@ -349,14 +354,17 @@ public final class ExportJournal {
      *              Name of the ledger.
      * @param exportId
      *              Optional KMS ARN used for S3-KMS encryption.
+     * @param awaitTimeoutMs
+     *              Milliseconds to wait for export to complete.
      * @return {@link DescribeJournalS3ExportResult} from QLDB.
      * @throws InterruptedException if thread is interrupted while busy waiting for JournalS3Export to complete.
      */
-    public static DescribeJournalS3ExportResult waitForExportToComplete(String ledgerName, String exportId) 
+    public static DescribeJournalS3ExportResult waitForExportToComplete(String ledgerName, String exportId, long awaitTimeoutMs)
             throws InterruptedException {
         log.info("Waiting for JournalS3Export for " + exportId + "to complete.");
         int count = 0;
-        while (count < MAX_RETRY_COUNT) {
+        long maxRetryCount = (awaitTimeoutMs / EXPORT_COMPLETION_POLL_PERIOD_MS) + 1;
+        while (count < maxRetryCount) {
             DescribeJournalS3ExportResult result = DescribeJournalExport.describeExport(ledgerName, exportId);
             if (result.getExportDescription().getStatus().equalsIgnoreCase(ExportStatus.COMPLETED.name())) {
                 log.info("JournalS3Export completed.");

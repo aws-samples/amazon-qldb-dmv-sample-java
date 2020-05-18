@@ -18,7 +18,6 @@
 
 package software.amazon.qldb.tutorial.model;
 
-import com.amazon.ion.Decimal;
 import com.amazon.ion.IonString;
 import com.amazon.ion.IonStruct;
 import com.amazon.ion.IonValue;
@@ -30,6 +29,8 @@ import software.amazon.qldb.tutorial.qldb.DmlResultDocument;
 import software.amazon.qldb.tutorial.qldb.QldbRevision;
 
 import java.io.IOException;
+
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -46,19 +47,19 @@ public final class SampleData {
 
     public static final List<VehicleRegistration> REGISTRATIONS = Collections.unmodifiableList(Arrays.asList(
             new VehicleRegistration("1N4AL11D75C109151", "LEWISR261LL", "WA", "Seattle",
-                    convertToDecimal(90.25), convertToLocalDate("2017-08-21"), convertToLocalDate("2020-05-11"),
+                    BigDecimal.valueOf(90.25), convertToLocalDate("2017-08-21"), convertToLocalDate("2020-05-11"),
                     new Owners(new Owner(null), Collections.emptyList())),
             new VehicleRegistration("KM8SRDHF6EU074761", "CA762X", "WA", "Kent",
-                    convertToDecimal(130.75), convertToLocalDate("2017-09-14"), convertToLocalDate("2020-06-25"),
+                    BigDecimal.valueOf(130.75), convertToLocalDate("2017-09-14"), convertToLocalDate("2020-06-25"),
                     new Owners(new Owner(null), Collections.emptyList())),
             new VehicleRegistration("3HGGK5G53FM761765", "CD820Z", "WA", "Everett",
-                    convertToDecimal(442.30), convertToLocalDate("2011-03-17"), convertToLocalDate("2021-03-24"),
+                    BigDecimal.valueOf(442.30), convertToLocalDate("2011-03-17"), convertToLocalDate("2021-03-24"),
                     new Owners(new Owner(null), Collections.emptyList())),
             new VehicleRegistration("1HVBBAANXWH544237", "LS477D", "WA", "Tacoma",
-                    convertToDecimal(42.20), convertToLocalDate("2011-10-26"), convertToLocalDate("2023-09-25"),
+                    BigDecimal.valueOf(42.20), convertToLocalDate("2011-10-26"), convertToLocalDate("2023-09-25"),
                     new Owners(new Owner(null), Collections.emptyList())),
             new VehicleRegistration("1C4RJFAG0FC625797", "TH393F", "WA", "Olympia",
-                    convertToDecimal(30.45), convertToLocalDate("2013-09-02"), convertToLocalDate("2024-03-19"),
+                    BigDecimal.valueOf(30.45), convertToLocalDate("2013-09-02"), convertToLocalDate("2024-03-19"),
                     new Owners(new Owner(null), Collections.emptyList()))
     ));
 
@@ -103,7 +104,7 @@ public final class SampleData {
      *
      * @param date
      *              The date string to convert.
-     * @return {@link java.time.LocalDate} or null if there is a {@link ParseException}
+     * @return {@link LocalDate} or null if there is a {@link ParseException}
      */
     public static synchronized LocalDate convertToLocalDate(String date) {
         return LocalDate.parse(date, DATE_TIME_FORMAT);
@@ -214,17 +215,6 @@ public final class SampleData {
      */
     public static String getStringValueOfStructField(final IonStruct struct, final String fieldName) {
         return ((IonString) struct.get(fieldName)).stringValue();
-    }
-
-    /**
-     * Convert the given double to a decimal value.
-     *
-     * @param num
-     *              The double to convert.
-     * @return the decimal value of the double.
-     */
-    private static synchronized Decimal convertToDecimal(final double num) {
-        return Decimal.valueOf(num);
     }
 
     /**

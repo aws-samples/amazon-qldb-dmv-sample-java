@@ -24,13 +24,16 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import software.amazon.qldb.TransactionExecutor;
 import software.amazon.qldb.tutorial.Constants;
+import software.amazon.qldb.tutorial.model.streams.RevisionData;
+
+import java.time.LocalDate;
 
 import java.time.LocalDate;
 
 /**
  * Represents a person, serializable to (and from) Ion.
  */ 
-public final class Person {
+public final class Person implements RevisionData {
     private final String firstName;
     private final String lastName;
 
@@ -97,5 +100,17 @@ public final class Person {
      */
     public static String getDocumentIdByGovId(final TransactionExecutor txn, final String govId) {
         return SampleData.getDocumentId(txn, Constants.PERSON_TABLE_NAME, "GovId", govId);
+    }
+
+    @Override
+    public String toString() {
+        return "Person{" +
+                "firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", dob=" + dob +
+                ", govId='" + govId + '\'' +
+                ", govIdType='" + govIdType + '\'' +
+                ", address='" + address + '\'' +
+                '}';
     }
 }

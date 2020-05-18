@@ -27,9 +27,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -80,7 +78,7 @@ public final class Verifier {
      *              {@link com.amazonaws.services.qldb.AmazonQLDB#getDigest}
      * @param proofBlob
      *              The ion encoded bytes representing the {@link Proof} associated with the supplied
-*                   {@code digestTipAddress} and {@code address} retrieved using
+     *              {@code digestTipAddress} and {@code address} retrieved using
      *              {@link com.amazonaws.services.qldb.AmazonQLDB#getRevision}.
      * @return {@code true} if the record is verified or {@code false} if it is not verified.
      */
@@ -135,7 +133,7 @@ public final class Verifier {
      *              Byte array containing one of the hashes to compare.
      * @return the concatenated array of hashes.
      */
-    public static byte[] joinHashesPairwise(final byte[] h1, final byte[] h2) {
+    public static byte[] dot(final byte[] h1, final byte[] h2) {
         if (h1.length == 0) {
             return h2;
         }
@@ -166,8 +164,8 @@ public final class Verifier {
      *              Leaf hashes of Merkle tree.
      * @return the root hash.
      */
-    public static byte[] calculateRootHashFromInternalHashes(final List<byte[]> internalHashes, final byte[] leafHash) {
-        return internalHashes.stream().reduce(leafHash, Verifier::joinHashesPairwise);
+    private static byte[] calculateRootHashFromInternalHashes(final List<byte[]> internalHashes, final byte[] leafHash) {
+        return internalHashes.stream().reduce(leafHash, Verifier::dot);
     }
 
     /**
@@ -205,5 +203,42 @@ public final class Verifier {
         byte[] arr = new byte[buffer.remaining()];
         buffer.get(arr);
         return arr;
+    }
+
+    /**
+     * Calculates the root hash from a list of hashes that represent the base of a Merkle tree.
+     *
+     * @param hashes
+     *              The list of byte arrays representing hashes making up base of a Merkle tree.
+     * @return a byte array that is the root hash of the given list of hashes.
+     */
+    public static byte[] calculateMerkleTreeRootHash(List<byte[]> hashes) {
+        if (hashes.isEmpty()) {
+            return new byte[0];
+        }
+
+        List<byte[]> remaining = combineLeafHashes(hashes);
+        while (remaining.size() > 1) {
+            remaining = combineLeafHashes(remaining);
+        }
+        return remaining.get(0);
+    }
+
+    private static List<byte[]> combineLeafHashes(List<byte[]> hashes) {
+        List<byte[]> combinedHashes = new ArrayList<>();
+        Iterator<byte[]> it = hashes.stream().iterator();
+
+        while (it.hasNext()) {
+            byte[] left = it.next();
+            if (it.hasNext()) {
+                byte[] right = it.next();
+                byte[] combined = dot(left, right);
+                combinedHashes.add(combined);
+            } else {
+                combinedHashes.add(left);
+            }
+        }
+
+        return combinedHashes;
     }
 }

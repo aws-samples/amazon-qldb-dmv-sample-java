@@ -22,13 +22,14 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import software.amazon.qldb.tutorial.model.streams.RevisionData;
 
 import java.time.LocalDate;
 
 /**
  * Represents a driver's license, serializable to (and from) Ion.
  */
-public final class DriversLicense {
+public final class DriversLicense implements RevisionData {
     private final String personId;
     private final String licenseNumber;
     private final String licenseType;
@@ -77,5 +78,16 @@ public final class DriversLicense {
     @JsonProperty("ValidToDate")
     public LocalDate getValidToDate() {
         return  validToDate;
+    }
+
+    @Override
+    public String toString() {
+        return "DriversLicense{" +
+                "personId='" + personId + '\'' +
+                ", licenseNumber='" + licenseNumber + '\'' +
+                ", licenseType='" + licenseType + '\'' +
+                ", validFromDate=" + validFromDate +
+                ", validToDate=" + validToDate +
+                '}';
     }
 }
