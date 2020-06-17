@@ -20,6 +20,7 @@ package software.amazon.qldb.tutorial;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -114,9 +115,10 @@ public final class ConnectToLedger {
 
 
     public static void main(final String... args) {
-        // Another way to send transactions to QLDB is using the driver.execute method
-        ConnectToLedger.getDriver().execute(txn -> {
-            txn.execute("SELECT 1 FROM <<{}>>");
-        });
+        Iterable<String> tables = ConnectToLedger.getDriver().getTableNames();
+        log.info("Existing tables in the ledger:");
+        for (String table : tables) {
+            log.info("- {} ", table);
+        }
     }
 }
