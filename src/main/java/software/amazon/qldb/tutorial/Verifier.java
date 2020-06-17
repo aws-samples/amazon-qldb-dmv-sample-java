@@ -18,11 +18,6 @@
 
 package software.amazon.qldb.tutorial;
 
-import com.amazonaws.util.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import software.amazon.qldb.tutorial.qldb.Proof;
-
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -33,6 +28,13 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.amazonaws.util.Base64;
+
+import software.amazon.qldb.tutorial.qldb.Proof;
 
 /**
  * Encapsulates the logic to verify the integrity of revisions or blocks in a QLDB ledger.

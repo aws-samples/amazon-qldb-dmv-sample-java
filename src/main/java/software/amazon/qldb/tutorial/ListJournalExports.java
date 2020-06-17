@@ -25,11 +25,12 @@ import com.amazonaws.services.qldb.model.ListJournalS3ExportsForLedgerRequest;
 import com.amazonaws.services.qldb.model.ListJournalS3ExportsForLedgerResult;
 import com.amazonaws.services.qldb.model.ListJournalS3ExportsRequest;
 import com.amazonaws.services.qldb.model.ListJournalS3ExportsResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * List the journal exports of a given QLDB ledger.

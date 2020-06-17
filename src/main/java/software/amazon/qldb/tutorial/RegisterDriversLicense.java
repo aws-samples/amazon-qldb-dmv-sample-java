@@ -1,5 +1,5 @@
 /*
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -18,20 +18,21 @@
 
 package software.amazon.qldb.tutorial;
 
-import com.amazon.ion.IonValue;
-import com.fasterxml.jackson.dataformat.ion.IonObjectMapper;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.qldb.QldbSession;
+
+import com.amazon.ion.IonValue;
+import com.fasterxml.jackson.dataformat.ion.IonObjectMapper;
+
 import software.amazon.qldb.Result;
 import software.amazon.qldb.TransactionExecutor;
 import software.amazon.qldb.tutorial.model.DriversLicense;
 import software.amazon.qldb.tutorial.model.Person;
 import software.amazon.qldb.tutorial.model.SampleData;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Register a new driver's license.
@@ -56,8 +57,8 @@ public final class RegisterDriversLicense {
      */
     public static boolean personAlreadyExists(final TransactionExecutor txn, final String govId) throws IOException {
         final String query = "SELECT * FROM Person AS p WHERE p.GovId = ?";
-        final List<IonValue> parameters = Collections.singletonList(Constants.MAPPER.writeValueAsIonValue(govId));
-        final Result result = txn.execute(query, parameters);
+
+        final Result result = txn.execute(query, Constants.MAPPER.writeValueAsIonValue(govId));
         return !result.isEmpty();
     }
 
@@ -165,6 +166,6 @@ public final class RegisterDriversLicense {
             );
 
             registerNewDriversLicense(txn, newPerson.getGovId(), newLicense, documentId);
-        }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
+        });
     }
 }

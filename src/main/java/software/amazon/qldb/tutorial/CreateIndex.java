@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -20,6 +20,7 @@ package software.amazon.qldb.tutorial;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 import software.amazon.qldb.Result;
 import software.amazon.qldb.TransactionExecutor;
@@ -63,7 +64,7 @@ public final class CreateIndex {
             createIndex(txn, Constants.VEHICLE_REGISTRATION_TABLE_NAME, Constants.VIN_INDEX_NAME);
             createIndex(txn, Constants.VEHICLE_REGISTRATION_TABLE_NAME,
                     Constants.VEHICLE_REGISTRATION_LICENSE_PLATE_NUMBER_INDEX_NAME);
-        }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
+        });
         log.info("Indexes created successfully!");
     }
 }

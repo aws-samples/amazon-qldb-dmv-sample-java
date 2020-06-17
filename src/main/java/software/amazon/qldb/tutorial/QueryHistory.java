@@ -1,5 +1,5 @@
 /*
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -18,20 +18,19 @@
 
 package software.amazon.qldb.tutorial;
 
-import com.amazon.ion.IonValue;
+import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.qldb.QldbSession;
+
+import com.amazon.ion.IonValue;
+
 import software.amazon.qldb.Result;
 import software.amazon.qldb.TransactionExecutor;
 import software.amazon.qldb.tutorial.model.SampleData;
 import software.amazon.qldb.tutorial.model.VehicleRegistration;
-
-import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Query a table's history for a particular set of documents.
@@ -59,9 +58,9 @@ public final class QueryHistory {
     public static void previousPrimaryOwners(final TransactionExecutor txn, final String vin, final String query) {
         try {
             final String docId = VehicleRegistration.getDocumentIdByVin(txn, vin);
-            final List<IonValue> parameters = Collections.singletonList(Constants.MAPPER.writeValueAsIonValue(docId));
+
             log.info("Querying the 'VehicleRegistration' table's history using VIN: {}...", vin);
-            final Result result = txn.execute(query, parameters);
+            final Result result = txn.execute(query, Constants.MAPPER.writeValueAsIonValue(docId));
             ScanTable.printDocuments(result);
         } catch (IOException ioe) {
             throw new IllegalStateException(ioe);
@@ -76,7 +75,7 @@ public final class QueryHistory {
         ConnectToLedger.getDriver().execute(txn -> {
             final String vin = SampleData.VEHICLES.get(0).getVin();
             previousPrimaryOwners(txn, vin, query);
-        }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
+        });
         log.info("Successfully queried history.");
     }
 }

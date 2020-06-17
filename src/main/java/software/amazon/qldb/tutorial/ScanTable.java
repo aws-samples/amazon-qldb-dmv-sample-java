@@ -1,5 +1,5 @@
 /*
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -18,16 +18,17 @@
 
 package software.amazon.qldb.tutorial;
 
-import com.amazon.ion.IonStruct;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import software.amazon.qldb.QldbSession;
-import software.amazon.qldb.Result;
-import software.amazon.qldb.TransactionExecutor;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.amazon.ion.IonStruct;
+
+import software.amazon.qldb.Result;
+import software.amazon.qldb.TransactionExecutor;
 
 /**
  * Scan for all the documents in a table.
@@ -100,6 +101,6 @@ public final class ScanTable {
             for (String tableName : tableNames) {
                 scanTableForDocuments(txn, tableName);
             }
-        }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
+        });
     }
 }

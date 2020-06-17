@@ -18,17 +18,16 @@
 
 package software.amazon.qldb.tutorial.model;
 
+import java.time.LocalDate;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import software.amazon.qldb.TransactionExecutor;
 import software.amazon.qldb.tutorial.Constants;
 import software.amazon.qldb.tutorial.model.streams.RevisionData;
-
-import java.time.LocalDate;
-
-import java.time.LocalDate;
 
 /**
  * Represents a person, serializable to (and from) Ion.

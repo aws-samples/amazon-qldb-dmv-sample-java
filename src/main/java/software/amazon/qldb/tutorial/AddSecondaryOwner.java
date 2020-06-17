@@ -1,5 +1,5 @@
 /*
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -122,7 +122,7 @@ public final class AddSecondaryOwner {
             } else {
                 addSecondaryOwnerForVin(txn, vin, documentId);
             }
-        }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
+        });
         log.info("Secondary owners successfully updated.");
     }
 }

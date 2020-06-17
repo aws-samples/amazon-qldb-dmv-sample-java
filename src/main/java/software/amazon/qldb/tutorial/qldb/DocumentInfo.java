@@ -18,10 +18,10 @@
 
 package software.amazon.qldb.tutorial.qldb;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.util.List;
 
 /**
  * Information about an individual document in a table and the transactions associated with that document

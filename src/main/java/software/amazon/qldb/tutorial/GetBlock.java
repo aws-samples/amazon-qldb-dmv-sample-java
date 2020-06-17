@@ -18,23 +18,24 @@
 
 package software.amazon.qldb.tutorial;
 
+import java.io.IOException;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.amazon.ion.IonStruct;
 import com.amazonaws.services.qldb.AmazonQLDB;
 import com.amazonaws.services.qldb.model.GetBlockRequest;
 import com.amazonaws.services.qldb.model.GetBlockResult;
 import com.amazonaws.services.qldb.model.GetDigestResult;
 import com.amazonaws.services.qldb.model.ValueHolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import software.amazon.qldb.QldbSession;
-import software.amazon.qldb.tutorial.model.SampleData;
+
 import software.amazon.qldb.tutorial.qldb.BlockAddress;
 import software.amazon.qldb.tutorial.qldb.JournalBlock;
 import software.amazon.qldb.tutorial.qldb.QldbRevision;
+import software.amazon.qldb.tutorial.model.SampleData;
 import software.amazon.qldb.tutorial.qldb.QldbStringUtils;
-
-import java.io.IOException;
-import java.util.List;
 
 /**
  * Get a journal block from a QLDB ledger.
@@ -58,7 +59,7 @@ public class GetBlock {
             List<IonStruct> results = ConnectToLedger.getDriver().execute(txn -> {
                 final String vin = SampleData.VEHICLES.get(1).getVin();
                 return GetRevision.queryRegistrationsByVin(txn, vin);
-            }, (retryNumber) -> log.info("Retrying due to OCC conflict..."));
+            });
             BlockAddress blockAddress = Constants.MAPPER.readValue(results.get(0), QldbRevision.class).getBlockAddress();
             verifyBlock(Constants.LEDGER_NAME, blockAddress);
         } catch (Exception e) {

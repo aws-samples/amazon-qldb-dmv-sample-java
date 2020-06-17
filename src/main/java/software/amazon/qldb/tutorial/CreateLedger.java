@@ -18,6 +18,7 @@
 
 package software.amazon.qldb.tutorial;
 
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.qldb.AmazonQLDB;
 import com.amazonaws.services.qldb.AmazonQLDBClientBuilder;
 import com.amazonaws.services.qldb.model.CreateLedgerRequest;
@@ -30,16 +31,19 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Create a ledger and wait for it to be active.
- *
+ * <p>
  * This code expects that you have AWS credentials setup per:
  * http://docs.aws.amazon.com/java-sdk/latest/developer-guide/setup-credentials.html
  */
 public final class CreateLedger {
     public static final Logger log = LoggerFactory.getLogger(CreateLedger.class);
     public static final Long LEDGER_CREATION_POLL_PERIOD_MS = 10_000L;
+    public static String endpoint = null;
+    public static String region = null;
     public static AmazonQLDB client = getClient();
 
-    private CreateLedger() { }
+    private CreateLedger() {
+    }
 
     /**
      * Build a low-level QLDB client.
@@ -47,11 +51,16 @@ public final class CreateLedger {
      * @return {@link AmazonQLDB} control plane client.
      */
     public static AmazonQLDB getClient() {
-        return AmazonQLDBClientBuilder.standard().build();
+        AmazonQLDBClientBuilder builder = AmazonQLDBClientBuilder.standard();
+        if (null != endpoint && null != region) {
+            builder.setEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region));
+        }
+        return builder.build();
     }
 
     public static void main(final String... args) throws Exception {
         try {
+            client = getClient();
 
             create(Constants.LEDGER_NAME);
 
@@ -66,8 +75,7 @@ public final class CreateLedger {
     /**
      * Create a new ledger with the specified ledger name.
      *
-     * @param ledgerName
-     *              Name of the ledger to be created.
+     * @param ledgerName Name of the ledger to be created.
      * @return {@link CreateLedgerResult} from QLDB.
      */
     public static CreateLedgerResult create(final String ledgerName) {
@@ -83,8 +91,7 @@ public final class CreateLedger {
     /**
      * Wait for a newly created ledger to become active.
      *
-     * @param ledgerName
-     *              Name of the ledger to wait on.
+     * @param ledgerName Name of the ledger to wait on.
      * @return {@link DescribeLedgerResult} from QLDB.
      * @throws InterruptedException if thread is being interrupted.
      */

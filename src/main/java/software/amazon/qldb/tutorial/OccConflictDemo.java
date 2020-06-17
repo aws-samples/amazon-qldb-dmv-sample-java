@@ -19,16 +19,13 @@
 package software.amazon.qldb.tutorial;
 
 import com.amazon.ion.IonValue;
-import com.amazonaws.services.qldbsession.model.OccConflictException;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.qldb.QldbSession;
-import software.amazon.qldb.Transaction;
+import software.amazon.awssdk.services.qldbsession.model.OccConflictException;
+import software.amazon.qldb.QldbDriver;
+import software.amazon.qldb.RetryPolicy;
 import software.amazon.qldb.tutorial.model.SampleData;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Demonstrates how to handle OCC conflicts, where two users try to execute and commit changes to the same document.
@@ -43,88 +40,45 @@ public final class OccConflictDemo {
 
     private OccConflictDemo() { }
 
-    /**
-     * Commit the transaction and retry up to a constant number of times.
-     *
-     * @param qldbSession
-     *              A QLDB session.
-     * @param transaction
-     *              An open transaction.
-     * @param statement
-     *              The statement to execute.
-     * @param parameters
-     *              The parameters for the query.
-     * @throws IOException if failed to convert parameter into an {@link IonValue}.
-     */
-    public static void commitTransaction(final QldbSession qldbSession, Transaction transaction, final String statement,
-                                         final String parameters)
-            throws IOException {
-        for (int i = 0; i < Constants.RETRY_LIMIT; i++) {
-            try {
-                transaction.commit();
-                log.info("Commit successful after {} retries.", i);
-                break;
-            } catch (OccConflictException e) {
-                log.info("Commit failed due to an OCC conflict. Restart transaction.");
-                transaction = qldbSession.startTransaction();
-                executeTransaction(qldbSession, transaction, statement, parameters);
-            }
-        }
-    }
+    public static void main(final String... args) throws IOException {
+        final String vehicleId1 = SampleData.REGISTRATIONS.get(0).getVin();
+        final IonValue ionVin = Constants.MAPPER.writeValueAsIonValue(vehicleId1);
 
-    /**
-     * Start a new transaction and execute it with the given statement.
-     *
-     * @param qldbSession
-     *              A QLDB session.
-     * @param transaction
-     *              An open transaction.
-     * @param statement
-     *              The statement to execute.
-     * @param parameters
-     *              The parameters for the query.
-     * @throws IOException if failed to convert parameter into an IonValue.
-     */
-    public static void executeTransaction(final QldbSession qldbSession, Transaction transaction, final String statement,
-                                          final String parameters)
-            throws IOException {
-        for (int i = 0; i < Constants.RETRY_LIMIT; i++) {
-            try {
-                final List<IonValue> parameter = Collections.singletonList(Constants.MAPPER.writeValueAsIonValue(parameters));
-                transaction.execute(statement, parameter);
-                log.info("Execute successful after {} retries.", i);
-                break;
-            } catch (OccConflictException e) {
-                log.info("Execute on qldbSession failed due to an OCC conflict. Restart transaction.");
-                transaction = qldbSession.startTransaction();
-            }
-        }
-    }
+        QldbDriver driver = QldbDriver.builder()
+                                              .ledger(Constants.LEDGER_NAME)
+                                              .transactionRetryPolicy(RetryPolicy.none())
+                                              .sessionClientBuilder(ConnectToLedger.getAmazonQldbSessionClientBuilder())
+                                              .build();
 
-    public static void main(final String... args) throws Exception {
-        try (QldbSession qldbSession1 = ConnectToLedger.createQldbSession();
-             QldbSession qldbSession2 = ConnectToLedger.createQldbSession()) {
-            final String statement1 = "UPDATE VehicleRegistration AS r SET r.City = 'Tukwila' WHERE r.VIN = ?";
-            final String statement2 = "SELECT * FROM VehicleRegistration AS r WHERE r.VIN = ?";
-            final String vehicleId1 = SampleData.REGISTRATIONS.get(0).getVin();
-            final String vehicleId2 = SampleData.REGISTRATIONS.get(0).getVin();
+        /*
+         * ⚠️Warning⚠️: Running a transaction inside another transaction that access the same document
+         * is not recommended at all.
+         *
+         * The below code will always have an Optimistic Concurrency Control problem because the inner
+         * transaction modified that same document than the outer transaction accessed when it started
+         * the transaction.
+         */
+        try {
+            log.info("Starting outer transaction");
+            driver.execute(txn -> {
+                txn.execute("UPDATE VehicleRegistration AS r SET r.City = 'Tukwila' WHERE r.VIN = ?",
+                            ionVin);
+                txn.execute("SELECT * FROM VehicleRegistration AS r WHERE r.VIN = ?",
+                            ionVin);
 
-            log.info("Updating the registration city on transaction 1...");
-            final Transaction t1 = qldbSession1.startTransaction();
-            log.info("Selecting the registrations on transaction 2...");
-            final Transaction t2 = qldbSession2.startTransaction();
-
-            log.info("Executing transaction 1...");
-            executeTransaction(qldbSession1, t1, statement1, vehicleId1);
-            log.info("Executing transaction 2...");
-            executeTransaction(qldbSession2, t2, statement2, vehicleId2);
-
-            log.info("Committing transaction 1...");
-            commitTransaction(qldbSession1, t1, statement1, vehicleId1);
-
-            // The first attempt to commit on t2 will fail due to an OCC conflict.
-            log.info("Committing transaction 2...");
-            commitTransaction(qldbSession2, t2, statement2, vehicleId2);
+                driver.execute(txn2 -> {
+                    log.info("Starting inner transaction");
+                    txn2.execute("UPDATE VehicleRegistration AS r SET r.City = 'Tukwila' WHERE r.VIN = ?",
+                                ionVin);
+                    txn2.execute("SELECT * FROM VehicleRegistration AS r WHERE r.VIN = ?",
+                                ionVin);
+                });
+                log.info("Inner transaction succeeded and the Vehicle with VIN {} was updated", vehicleId1);
+            });
+        } catch (OccConflictException e) {
+            log.error("Optimistic Concurrency Control Exception. One of the threads tried to commit the transaction that used"
+                     + "the same "
+                     + "thread already.");
         }
     }
 }

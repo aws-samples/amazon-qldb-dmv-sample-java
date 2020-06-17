@@ -22,15 +22,17 @@ import com.amazonaws.services.qldb.model.ExportJournalToS3Result;
 import com.amazonaws.services.qldb.model.S3EncryptionConfiguration;
 import com.amazonaws.services.qldb.model.S3ObjectEncryptionType;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
-import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import software.amazon.qldb.tutorial.qldb.JournalBlock;
 
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+
+import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
+import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import software.amazon.qldb.tutorial.qldb.JournalBlock;
 
 /**
  * Validate the hash chain of a QLDB ledger by stepping through its S3 export.
@@ -63,7 +65,7 @@ public final class ValidateQldbHashChain {
         S3EncryptionConfiguration encryptionConfiguration = new S3EncryptionConfiguration()
                 .withObjectEncryptionType(S3ObjectEncryptionType.SSE_S3);
         ExportJournalToS3Result exportJournalToS3Result = 
-            ExportJournal.createJournalExportAndAwaitCompletion(Constants.LEDGER_NAME,
+            ExportJournal.createJournalExportAndAwaitCompletion(Constants.LEDGER_NAME, 
                     bucketName, prefix, null, encryptionConfiguration, ExportJournal.DEFAULT_EXPORT_TIMEOUT_MS);
 
         return exportJournalToS3Result.getExportId();

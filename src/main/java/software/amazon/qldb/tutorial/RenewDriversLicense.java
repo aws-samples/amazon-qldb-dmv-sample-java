@@ -1,5 +1,5 @@
 /*
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -18,21 +18,24 @@
 
 package software.amazon.qldb.tutorial;
 
-import com.amazon.ion.IonValue;
-import com.amazon.ion.Timestamp;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import software.amazon.qldb.QldbSession;
-import software.amazon.qldb.Result;
-import software.amazon.qldb.TransactionExecutor;
-import software.amazon.qldb.tutorial.model.Owner;
-import software.amazon.qldb.tutorial.model.SampleData;
-
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import com.amazon.ion.Timestamp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.amazon.ion.IonSystem;
+import com.amazon.ion.IonValue;
+import com.amazon.ion.system.IonSystemBuilder;
+
+import software.amazon.qldb.Result;
+import software.amazon.qldb.TransactionExecutor;
+import software.amazon.qldb.tutorial.model.Owner;
+import software.amazon.qldb.tutorial.model.SampleData;
 
 /**
  * Find the person associated with a license number.
@@ -43,6 +46,7 @@ import java.util.List;
  */
 public final class RenewDriversLicense {
     public static final Logger log = LoggerFactory.getLogger(RegisterDriversLicense.class);
+    private static final IonSystem SYSTEM = IonSystemBuilder.standard().build();
 
     private RenewDriversLicense() { }
 
@@ -61,8 +65,8 @@ public final class RenewDriversLicense {
         try {
             log.info("Finding person ID with license number: {}...", licenseNumber);
             final String query = "SELECT PersonId FROM DriversLicense WHERE LicenseNumber = ?";
-            final List<IonValue> parameters = Collections.singletonList(Constants.MAPPER.writeValueAsIonValue(licenseNumber));
-            final Result result = txn.execute(query, parameters);
+
+            final Result result = txn.execute(query, Constants.MAPPER.writeValueAsIonValue(licenseNumber));
             if (result.isEmpty()) {
                 ScanTable.printDocuments(result);
                 throw new IllegalStateException("Unable to find person with license number: " + licenseNumber);
@@ -116,13 +120,13 @@ public final class RenewDriversLicense {
                                                    final LocalDate validFromDate, final LocalDate validToDate) {
         try {
             log.info("Renewing license with license number: {}...", licenseNumber);
-            final String statement = "UPDATE DriversLicense AS d SET d.ValidFromDate = ?, d.ValidToDate = ? "
+            final String query = "UPDATE DriversLicense AS d SET d.ValidFromDate = ?, d.ValidToDate = ? "
                 + "WHERE d.LicenseNumber = ?";
             final List<IonValue> parameters = new ArrayList<>();
             parameters.add(localDateToTimestamp(validFromDate));
             parameters.add(localDateToTimestamp(validToDate));
             parameters.add(Constants.MAPPER.writeValueAsIonValue(licenseNumber));
-            Result result = txn.execute(statement, parameters);
+            Result result = txn.execute(query, parameters);
             List<String> list = SampleData.getDocumentIdsFromDmlResult(result);
             log.info("DriversLicense Document IDs which had licenses renewed: ");
             list.forEach(log::info);
@@ -139,10 +143,10 @@ public final class RenewDriversLicense {
             verifyDriverFromLicenseNumber(txn, personId);
             renewDriversLicense(txn, licenseNumber,
                     SampleData.convertToLocalDate("2019-04-19"), SampleData.convertToLocalDate("2023-04-19"));
-        }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
+        });
     }
 
     private static IonValue localDateToTimestamp(LocalDate date) {
-        return Constants.SYSTEM.newTimestamp(Timestamp.forDay(date.getYear(), date.getMonthValue(), date.getDayOfMonth()));
+        return SYSTEM.newTimestamp(Timestamp.forDay(date.getYear(), date.getMonthValue(), date.getDayOfMonth()));
     }
 }

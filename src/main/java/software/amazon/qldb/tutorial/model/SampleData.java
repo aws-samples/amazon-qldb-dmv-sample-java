@@ -21,15 +21,7 @@ package software.amazon.qldb.tutorial.model;
 import com.amazon.ion.IonString;
 import com.amazon.ion.IonStruct;
 import com.amazon.ion.IonValue;
-import software.amazon.qldb.QldbSession;
-import software.amazon.qldb.Result;
-import software.amazon.qldb.TransactionExecutor;
-import software.amazon.qldb.tutorial.Constants;
-import software.amazon.qldb.tutorial.qldb.DmlResultDocument;
-import software.amazon.qldb.tutorial.qldb.QldbRevision;
-
 import java.io.IOException;
-
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.time.LocalDate;
@@ -38,6 +30,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import software.amazon.qldb.Result;
+import software.amazon.qldb.TransactionExecutor;
+import software.amazon.qldb.tutorial.ConnectToLedger;
+import software.amazon.qldb.tutorial.Constants;
+import software.amazon.qldb.tutorial.qldb.DmlResultDocument;
+import software.amazon.qldb.tutorial.qldb.QldbRevision;
 
 /**
  * Sample domain objects for use throughout this tutorial.
@@ -104,7 +102,7 @@ public final class SampleData {
      *
      * @param date
      *              The date string to convert.
-     * @return {@link LocalDate} or null if there is a {@link ParseException}
+     * @return {@link java.time.LocalDate} or null if there is a {@link ParseException}
      */
     public static synchronized LocalDate convertToLocalDate(String date) {
         return LocalDate.parse(date, DATE_TIME_FORMAT);
@@ -155,8 +153,6 @@ public final class SampleData {
     /**
      * Get the document by ID.
      *
-     * @param qldbSession
-     *              A QLDB session.
      * @param tableName
      *              Name of the table to insert documents into.
      * @param documentId
@@ -164,11 +160,13 @@ public final class SampleData {
      * @return a {@link QldbRevision} object.
      * @throws IllegalStateException if failed to convert parameter into {@link IonValue}.
      */
-    public static QldbRevision getDocumentById(QldbSession qldbSession, String tableName, String documentId) {
+    public static QldbRevision getDocumentById(String tableName, String documentId) {
         try {
-            final List<IonValue> parameters = Collections.singletonList(Constants.MAPPER.writeValueAsIonValue(documentId));
-            final String query = String.format("SELECT c.* FROM _ql_committed_%s AS c BY docId WHERE docId = ?", tableName);
-            Result result = qldbSession.execute(query, parameters);
+            final IonValue ionValue = Constants.MAPPER.writeValueAsIonValue(documentId);
+            Result result = ConnectToLedger.getDriver().execute(txn -> {
+                return txn.execute("SELECT c.* FROM _ql_committed_" + tableName + " AS c BY docId "
+                                   + "WHERE docId = ?", ionValue);
+            });
             if (result.isEmpty()) {
                 throw new IllegalStateException("Unable to retrieve document by id " + documentId + " in table " + tableName);
             }

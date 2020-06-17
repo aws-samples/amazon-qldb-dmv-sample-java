@@ -20,29 +20,30 @@ package software.amazon.qldb.tutorial;
 
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonStruct;
+import com.amazon.ion.IonSystem;
 import com.amazon.ion.IonValue;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
+import com.amazon.ion.system.IonSystemBuilder;
 import com.amazonaws.services.qldb.AmazonQLDB;
 import com.amazonaws.services.qldb.model.GetDigestResult;
 import com.amazonaws.services.qldb.model.GetRevisionRequest;
 import com.amazonaws.services.qldb.model.GetRevisionResult;
 import com.amazonaws.services.qldb.model.ValueHolder;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.qldb.QldbSession;
+import software.amazon.qldb.QldbDriver;
 import software.amazon.qldb.Result;
 import software.amazon.qldb.TransactionExecutor;
 import software.amazon.qldb.tutorial.model.SampleData;
 import software.amazon.qldb.tutorial.qldb.BlockAddress;
 import software.amazon.qldb.tutorial.qldb.QldbRevision;
 import software.amazon.qldb.tutorial.qldb.QldbStringUtils;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Verify the integrity of a document revision in a QLDB ledger.
@@ -53,6 +54,7 @@ import java.util.List;
 public final class GetRevision {
     public static final Logger log = LoggerFactory.getLogger(GetRevision.class);
     public static AmazonQLDB client = CreateLedger.getClient();
+    private static final IonSystem SYSTEM = IonSystemBuilder.standard().build();
 
     private GetRevision() { }
 
@@ -60,16 +62,15 @@ public final class GetRevision {
 
         final String vin = SampleData.REGISTRATIONS.get(0).getVin();
 
-        try (QldbSession qldbSession = ConnectToLedger.createQldbSession()) {
-            verifyRegistration(qldbSession, Constants.LEDGER_NAME, vin);
-        }
+
+        verifyRegistration(ConnectToLedger.getDriver(), Constants.LEDGER_NAME, vin);
     }
 
     /**
      * Verify each version of the registration for the given VIN.
      *
-     * @param qldbSession
-     *              A QLDB session.
+     * @param driver
+     *              A QLDB driver.
      * @param ledgerName
      *              The ledger to get digest from.
      * @param vin
@@ -77,7 +78,7 @@ public final class GetRevision {
      * @throws Exception if failed to verify digests.
      * @throws AssertionError if document revision verification failed.
      */
-    public static void verifyRegistration(final QldbSession qldbSession, final String ledgerName, final String vin)
+    public static void verifyRegistration(final QldbDriver driver, final String ledgerName, final String vin)
             throws Exception {
         log.info(String.format("Let's verify the registration with VIN=%s, in ledger=%s.", vin, ledgerName));
 
@@ -95,9 +96,9 @@ public final class GetRevision {
             log.info(String.format("Next, let's query the registration with VIN=%s. "
                     + "Then we can verify each version of the registration.", vin));
             List<IonStruct> documentsWithMetadataList = new ArrayList<>();
-            qldbSession.execute(txn -> {
+            driver.execute(txn -> {
                 documentsWithMetadataList.addAll(queryRegistrationsByVin(txn, vin));
-            }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
+            });
             log.info("Registrations queried successfully!");
 
             log.info(String.format("Found %s revisions of the registration with VIN=%s.",
@@ -120,7 +121,7 @@ public final class GetRevision {
                 final IonReader reader = IonReaderBuilder.standard().build(proof);
                 reader.next();
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                IonWriter writer = Constants.SYSTEM.newBinaryWriter(baos);
+                IonWriter writer = SYSTEM.newBinaryWriter(baos);
                 writer.writeValue(reader);
                 writer.close();
                 baos.flush();
