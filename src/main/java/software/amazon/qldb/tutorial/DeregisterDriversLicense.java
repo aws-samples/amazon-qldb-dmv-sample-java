@@ -1,5 +1,5 @@
 /*
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -70,6 +70,6 @@ public final class DeregisterDriversLicense {
         final DriversLicense license = SampleData.LICENSES.get(1);
         ConnectToLedger.getDriver().execute(txn -> {
             deregisterDriversLicense(txn, license.getLicenseNumber());
-        }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
+        });
     }
 }

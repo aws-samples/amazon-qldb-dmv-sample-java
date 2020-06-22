@@ -50,6 +50,7 @@ Below is a list of the sample applications included in this repository with the 
 - ConnectToLedger
 - CreateTable
 - CreateIndex
+- ConnectToLedger: Run it again to see the created tables.
 - InsertDocument
 - ScanTable
 

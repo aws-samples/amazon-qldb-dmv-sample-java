@@ -1,5 +1,5 @@
 /*
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -17,6 +17,11 @@
  */
 
 package software.amazon.qldb.tutorial.streams;
+
+import static com.amazonaws.services.kinesis.clientlibrary.lib.worker.InitialPositionInStream.TRIM_HORIZON;
+import static java.nio.ByteBuffer.wrap;
+import static software.amazon.qldb.tutorial.Constants.LEDGER_NAME;
+import static software.amazon.qldb.tutorial.Constants.STREAM_NAME;
 
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonStruct;
@@ -56,6 +61,21 @@ import com.amazonaws.services.qldb.model.ListJournalKinesisStreamsForLedgerResul
 import com.amazonaws.services.qldb.model.StreamJournalToKinesisRequest;
 import com.amazonaws.services.qldb.model.StreamJournalToKinesisResult;
 import com.fasterxml.jackson.databind.ObjectReader;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.qldb.tutorial.Constants;
@@ -72,28 +92,6 @@ import software.amazon.qldb.tutorial.model.streams.RevisionDetailsRecord;
 import software.amazon.qldb.tutorial.model.streams.StreamRecord;
 import software.amazon.qldb.tutorial.qldb.JournalBlock;
 import software.amazon.qldb.tutorial.qldb.QldbRevision;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static com.amazonaws.services.kinesis.clientlibrary.lib.worker.InitialPositionInStream.TRIM_HORIZON;
-import static java.lang.Thread.sleep;
-import static java.nio.ByteBuffer.wrap;
-import static software.amazon.qldb.tutorial.Constants.LEDGER_NAME;
-import static software.amazon.qldb.tutorial.Constants.STREAM_NAME;
 
 /**
  * Demonstrates the QLDB stream functionality.
@@ -137,28 +135,28 @@ public final class StreamJournal {
     public static Function<StreamRecord, Boolean> areAllRecordsFound;
     public static String STREAM_ROLE_KINESIS_STATEMENT_TEMPLATE =
             "{" +
-                    "   \"Sid\": \"QLDBStreamKinesisPermissions\"," +
-                    "   \"Action\": [\"kinesis:PutRecord\", \"kinesis:PutRecords\", " +
-                    "\"kinesis:DescribeStream\", \"kinesis:ListShards\"]," +
-                    "   \"Effect\": \"Allow\"," +
-                    "   \"Resource\": \"{kdsArn}\"" +
-                    "}";
+            "   \"Sid\": \"QLDBStreamKinesisPermissions\"," +
+            "   \"Action\": [\"kinesis:PutRecord\", \"kinesis:PutRecords\", " +
+            "\"kinesis:DescribeStream\", \"kinesis:ListShards\"]," +
+            "   \"Effect\": \"Allow\"," +
+            "   \"Resource\": \"{kdsArn}\"" +
+            "}";
 
     public static final String POLICY_TEMPLATE =
             "{" +
-                    "   \"Version\" : \"2012-10-17\"," +
-                    "   \"Statement\": [ {statements} ]" +
-                    "}";
+            "   \"Version\" : \"2012-10-17\"," +
+            "   \"Statement\": [ {statements} ]" +
+            "}";
 
     public static String ASSUME_ROLE_POLICY = POLICY_TEMPLATE.replace(
             "{statements}",
             "{" +
-                    "   \"Effect\": \"Allow\"," +
-                    "   \"Principal\": {" +
-                    "       \"Service\": [\"qldb.amazonaws.com\"]" +
-                    "   }," +
-                    "   \"Action\": [ \"sts:AssumeRole\" ]" +
-                    "}");
+            "   \"Effect\": \"Allow\"," +
+            "   \"Principal\": {" +
+            "       \"Service\": [\"qldb.amazonaws.com\"]" +
+            "   }," +
+            "   \"Action\": [ \"sts:AssumeRole\" ]" +
+            "}");
 
     private static ObjectReader reader = Constants.MAPPER.readerFor(StreamRecord.class);
     private static final Logger log = LoggerFactory.getLogger(StreamJournal.class);
@@ -225,12 +223,12 @@ public final class StreamJournal {
         kdsRoleName = ledgerName + "-stream-role";
         kdsPolicyName = ledgerName + "-stream-policy";
         kclConfig = new KinesisClientLibConfiguration(
-                ledgerName,
-                kdsName,
-                credentialsProvider,
-                "tutorial")
-                .withInitialPositionInStream(TRIM_HORIZON)
-                .withRegionName(regionName);
+            ledgerName,
+            kdsName,
+            credentialsProvider,
+            "tutorial")
+            .withInitialPositionInStream(TRIM_HORIZON)
+            .withRegionName(regionName);
         isAggregationEnabled = true;
         bufferCapacity = numberOfExpectedRecords(exclusiveEndTime != null);
         areAllRecordsFound = record -> recordBuffer.size() == bufferCapacity;
@@ -272,12 +270,6 @@ public final class StreamJournal {
      */
     public static void createTables() {
         CreateTable.main();
-
-        try {
-            sleep(4000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     public static void insertDocuments() {
@@ -353,7 +345,7 @@ public final class StreamJournal {
                 break;
             }
             try {
-                sleep(1000);
+                Thread.sleep(1000);
             } catch (Exception ignore) {
             }
             retries++;
@@ -375,7 +367,7 @@ public final class StreamJournal {
         while (retries < MAX_RETRIES) {
             try {
                 log.info("Sleeping for 5 sec before polling Kinesis Stream status.");
-                sleep(5 * 1000);
+                Thread.sleep(5 * 1000);
             } catch (Exception ignore) {
             }
 
@@ -387,7 +379,7 @@ public final class StreamJournal {
             }
             log.info("Still waiting for Kinesis Stream to become Active. Current streamStatus: {}.", streamStatus);
             try {
-                sleep(1000);
+                Thread.sleep(1000);
             } catch (Exception ignore) {
             }
             retries++;
@@ -411,7 +403,7 @@ public final class StreamJournal {
                 iam.getRolePolicy(new GetRolePolicyRequest().withPolicyName(kdsPolicyName).withRoleName(kdsRoleName));
             } catch (NoSuchEntityException e) {
                 attachPolicyToKdsRole();
-                sleep(20 * 1000);
+                Thread.sleep(20 * 1000);
             }
         } catch (NoSuchEntityException e) {
             log.info("The provided role doesn't exist. Creating the role with name: {}. Please wait...", kdsRoleName);
@@ -420,19 +412,19 @@ public final class StreamJournal {
                     .withAssumeRolePolicyDocument(ASSUME_ROLE_POLICY);
             roleArn = iam.createRole(createRole).getRole().getArn();
             attachPolicyToKdsRole();
-            sleep(20 * 1000);
+            Thread.sleep(20 * 1000);
         }
         return roleArn;
     }
 
     private static void attachPolicyToKdsRole() {
         String rolePolicy = POLICY_TEMPLATE
-                .replace("{statements}", STREAM_ROLE_KINESIS_STATEMENT_TEMPLATE)
-                .replace("{kdsArn}", kdsArn);
+            .replace("{statements}", STREAM_ROLE_KINESIS_STATEMENT_TEMPLATE)
+            .replace("{kdsArn}", kdsArn);
         PutRolePolicyRequest putPolicy = new PutRolePolicyRequest()
-                .withRoleName(kdsRoleName)
-                .withPolicyName(kdsPolicyName)
-                .withPolicyDocument(rolePolicy);
+            .withRoleName(kdsRoleName)
+            .withPolicyName(kdsPolicyName)
+            .withPolicyDocument(rolePolicy);
         iam.putRolePolicy(putPolicy);
     }
 
@@ -552,18 +544,18 @@ public final class StreamJournal {
     private static List<JournalBlock> streamRecordsToJournalBlocks() {
         Map<ByteBuffer, QldbRevision> revisionsByHash = new HashMap<>();
         recordBuffer.stream()
-                .filter(record -> record.getRecordType().equals("REVISION_DETAILS"))
-                .forEach(record -> {
-                    try {
-                        Revision revision = ((RevisionDetailsRecord) record.getPayload()).getRevision();
-                        byte[] revisionHash = revision.getHash();
-                        revisionsByHash.put(
-                                wrap(revisionHash).asReadOnlyBuffer(),
-                                QldbRevision.fromIon((IonStruct) Constants.MAPPER.writeValueAsIonValue(revision)));
-                    } catch (IOException e) {
-                        throw new IllegalArgumentException("Could not map RevisionDetailsRecord to QldbRevision.", e);
-                    }
-                });
+            .filter(record -> record.getRecordType().equals("REVISION_DETAILS"))
+            .forEach(record -> {
+                try {
+                    Revision revision = ((RevisionDetailsRecord) record.getPayload()).getRevision();
+                    byte[] revisionHash = revision.getHash();
+                    revisionsByHash.put(
+                            wrap(revisionHash).asReadOnlyBuffer(),
+                            QldbRevision.fromIon((IonStruct) Constants.MAPPER.writeValueAsIonValue(revision)));
+                } catch (IOException e) {
+                    throw new IllegalArgumentException("Could not map RevisionDetailsRecord to QldbRevision.", e);
+                }
+            });
         return recordBuffer.stream()
                 .filter(streamRecord -> streamRecord.getRecordType().equals("BLOCK_SUMMARY"))
                 .map(streamRecord -> (BlockSummaryRecord) streamRecord.getPayload())
@@ -637,6 +629,10 @@ public final class StreamJournal {
 
         int retries = 0;
         while (retries < MAX_RETRIES) {
+            try {
+                Thread.sleep(20 * 1000);
+            } catch (Exception ignore) {
+            }
 
             try {
                 kinesis.describeStream(describeStreamRequest);
@@ -645,7 +641,7 @@ public final class StreamJournal {
             }
 
             try {
-                sleep(1000);
+                Thread.sleep(1000);
             } catch (Exception ignore) {
             }
             retries++;

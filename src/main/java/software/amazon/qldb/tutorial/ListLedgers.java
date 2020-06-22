@@ -22,11 +22,12 @@ import com.amazonaws.services.qldb.AmazonQLDB;
 import com.amazonaws.services.qldb.model.LedgerSummary;
 import com.amazonaws.services.qldb.model.ListLedgersRequest;
 import com.amazonaws.services.qldb.model.ListLedgersResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * List all QLDB ledgers in a given account.

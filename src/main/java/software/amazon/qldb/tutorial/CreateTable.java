@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -59,6 +59,6 @@ public final class CreateTable {
             createTable(txn, Constants.PERSON_TABLE_NAME);
             createTable(txn, Constants.VEHICLE_TABLE_NAME);
             createTable(txn, Constants.VEHICLE_REGISTRATION_TABLE_NAME);
-        }, (retryAttempt) -> log.info("Retrying due to OCC conflict..."));
+        });
     }
 }

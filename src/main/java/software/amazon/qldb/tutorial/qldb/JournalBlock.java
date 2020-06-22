@@ -29,14 +29,14 @@ import software.amazon.qldb.tutorial.Verifier;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.nio.ByteBuffer.wrap;
-
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
 
 /**
  * Represents a JournalBlock that was recorded after executing a transaction

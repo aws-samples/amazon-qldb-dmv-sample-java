@@ -1,5 +1,5 @@
 /*
- * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: MIT-0
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this
@@ -18,15 +18,16 @@
 
 package software.amazon.qldb.tutorial;
 
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.services.qldbsession.AmazonQLDBSessionClientBuilder;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.qldb.PooledQldbDriver;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.services.qldbsession.QldbSessionClient;
+import software.amazon.awssdk.services.qldbsession.QldbSessionClientBuilder;
 import software.amazon.qldb.QldbDriver;
-import software.amazon.qldb.QldbSession;
-import software.amazon.qldb.exceptions.QldbClientException;
+import software.amazon.qldb.RetryPolicy;
 
 /**
  * Connect to a session for a given ledger using default settings.
@@ -36,11 +37,11 @@ import software.amazon.qldb.exceptions.QldbClientException;
  */
 public final class ConnectToLedger {
     public static final Logger log = LoggerFactory.getLogger(ConnectToLedger.class);
-    public static AWSCredentialsProvider credentialsProvider;
+    public static AwsCredentialsProvider credentialsProvider;
     public static String endpoint = null;
     public static String ledgerName = Constants.LEDGER_NAME;
     public static String region = null;
-    private static PooledQldbDriver driver;
+    public static QldbDriver driver;
 
     private ConnectToLedger() {
     }
@@ -48,21 +49,21 @@ public final class ConnectToLedger {
     /**
      * Create a pooled driver for creating sessions.
      *
+     * @param retryAttempts How many times the transaction will be retried in
+     * case of a retryable issue happens like Optimistic Concurrency Control exception,
+     * server side failures or network issues.
      * @return The pooled driver for creating sessions.
      */
-    public static PooledQldbDriver createQldbDriver() {
-        AmazonQLDBSessionClientBuilder builder = AmazonQLDBSessionClientBuilder.standard();
-        if (null != endpoint && null != region) {
-            builder.setEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region));
-        }
-        if (null != credentialsProvider) {
-            builder.setCredentials(credentialsProvider);
-        }
-        return PooledQldbDriver.builder()
-                .withLedger(ledgerName)
-                .withRetryLimit(Constants.RETRY_LIMIT)
-                .withSessionClientBuilder(builder)
-                .build();
+    public static QldbDriver createQldbDriver(int retryAttempts) {
+        QldbSessionClientBuilder builder = getAmazonQldbSessionClientBuilder();
+        return QldbDriver.builder()
+                             .ledger(ledgerName)
+                             .transactionRetryPolicy(RetryPolicy
+                                   .builder()
+                                   .maxRetries(retryAttempts)
+                                   .build())
+                             .sessionClientBuilder(builder)
+                             .build();
     }
 
     /**
@@ -70,30 +71,54 @@ public final class ConnectToLedger {
      *
      * @return The pooled driver for creating sessions.
      */
-    public static PooledQldbDriver getDriver() {
+    public static QldbDriver createQldbDriver() {
+        QldbSessionClientBuilder builder = getAmazonQldbSessionClientBuilder();
+        return QldbDriver.builder()
+            .ledger(ledgerName)
+            .transactionRetryPolicy(RetryPolicy.builder()
+                                               .maxRetries(Constants.RETRY_LIMIT).build())
+            .sessionClientBuilder(builder)
+            .build();
+    }
+
+    /**
+     * Creates a QldbSession builder that is passed to the QldbDriver to connect to the Ledger.
+     *
+     * @return An instance of the AmazonQLDBSessionClientBuilder
+     */
+    public static QldbSessionClientBuilder getAmazonQldbSessionClientBuilder() {
+        QldbSessionClientBuilder builder = QldbSessionClient.builder();
+        if (null != endpoint && null != region) {
+            try {
+                builder.endpointOverride(new URI(endpoint));
+            } catch (URISyntaxException e) {
+                throw new IllegalArgumentException(e);
+            }
+        }
+        if (null != credentialsProvider) {
+            builder.credentialsProvider(credentialsProvider);
+        }
+        return builder;
+    }
+
+    /**
+     * Create a pooled driver for creating sessions.
+     *
+     * @return The pooled driver for creating sessions.
+     */
+    public static QldbDriver getDriver() {
         if (driver == null) {
             driver = createQldbDriver();
         }
         return driver;
     }
 
-    /**
-     * Connect to a ledger through a {@link QldbDriver}.
-     *
-     * @return {@link QldbSession}.
-     */
-    public static QldbSession createQldbSession() {
-        return getDriver().getSession();
-    }
 
     public static void main(final String... args) {
-        try (QldbSession qldbSession = createQldbSession()) {
-            log.info("Listing table names ");
-            for (String tableName : qldbSession.getTableNames()) {
-                log.info(tableName);
-            }
-        } catch (QldbClientException e) {
-            log.error("Unable to create session.", e);
+        Iterable<String> tables = ConnectToLedger.getDriver().getTableNames();
+        log.info("Existing tables in the ledger:");
+        for (String table : tables) {
+            log.info("- {} ", table);
         }
     }
 }

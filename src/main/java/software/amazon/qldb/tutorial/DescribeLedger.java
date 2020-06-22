@@ -21,6 +21,7 @@ package software.amazon.qldb.tutorial;
 import com.amazonaws.services.qldb.AmazonQLDB;
 import com.amazonaws.services.qldb.model.DescribeLedgerRequest;
 import com.amazonaws.services.qldb.model.DescribeLedgerResult;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

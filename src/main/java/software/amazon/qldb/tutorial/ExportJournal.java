@@ -18,6 +18,11 @@
 
 package software.amazon.qldb.tutorial;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagement;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder;
 import com.amazonaws.services.identitymanagement.model.AttachRolePolicyRequest;
@@ -43,10 +48,6 @@ import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.time.Duration;
 
 /**
  * Export a journal to S3.

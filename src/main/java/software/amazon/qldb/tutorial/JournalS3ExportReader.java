@@ -22,8 +22,10 @@ import com.amazon.ion.IonList;
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonString;
 import com.amazon.ion.IonStruct;
+import com.amazon.ion.IonSystem;
 import com.amazon.ion.IonType;
 import com.amazon.ion.system.IonReaderBuilder;
+import com.amazon.ion.system.IonSystemBuilder;
 import com.amazonaws.services.qldb.model.DescribeJournalS3ExportResult;
 import com.amazonaws.services.qldb.model.S3ExportConfiguration;
 import com.amazonaws.services.s3.AmazonS3;
@@ -31,13 +33,15 @@ import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import software.amazon.qldb.tutorial.qldb.JournalBlock;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import software.amazon.qldb.tutorial.qldb.JournalBlock;
 
 /**
  * Given bucket, prefix and exportId, read the contents of the export and return
@@ -48,6 +52,7 @@ import java.util.List;
  */
 public final class JournalS3ExportReader {
     public static final Logger log = LoggerFactory.getLogger(JournalS3ExportReader.class);
+    private static final IonSystem SYSTEM = IonSystemBuilder.standard().build();
 
     private JournalS3ExportReader() { }
 
@@ -159,7 +164,7 @@ public final class JournalS3ExportReader {
      * @throws IllegalStateException if invalid IonType is found in the S3 Object.
      */
     private static List<JournalBlock> getJournalBlocks(final S3Object s3Object) {
-        IonReader ionReader = Constants.SYSTEM.newReader(s3Object.getObjectContent());
+        IonReader ionReader = SYSTEM.newReader(s3Object.getObjectContent());
         List<JournalBlock> journalBlocks = new ArrayList<>();
         // data files contain list of blocks
         while (ionReader.next() != null) {
@@ -167,7 +172,7 @@ public final class JournalS3ExportReader {
                 throw new IllegalStateException("Expected ion STRUCT but found " + ionReader.getType());
             }
             try {
-                journalBlocks.add(Constants.MAPPER.readValue(Constants.SYSTEM.newValue(ionReader), JournalBlock.class));
+                journalBlocks.add(Constants.MAPPER.readValue(SYSTEM.newValue(ionReader), JournalBlock.class));
             } catch (IOException ioe) {
                 throw new IllegalStateException(ioe);
             }
@@ -188,7 +193,7 @@ public final class JournalS3ExportReader {
         IonReader ionReader = IonReaderBuilder.standard().build(s3Object.getObjectContent());
         ionReader.next(); // Read the data
         List<String> keys = new ArrayList<>();
-        IonStruct ionStruct = (IonStruct) Constants.SYSTEM.newValue(ionReader);
+        IonStruct ionStruct = (IonStruct) SYSTEM.newValue(ionReader);
         IonList ionKeysList = (IonList) ionStruct.get("keys");
         ionKeysList.forEach(key -> keys.add(((IonString) key).stringValue()));
         return keys;

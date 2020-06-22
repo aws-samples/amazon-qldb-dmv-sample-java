@@ -35,14 +35,12 @@ import com.amazon.ion.IonValue;
 import com.amazon.ion.Timestamp;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import software.amazon.qldb.QldbSession;
-import software.amazon.qldb.Result;
-import software.amazon.qldb.TransactionExecutor;
-
 import java.util.Collections;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import software.amazon.qldb.Result;
+import software.amazon.qldb.TransactionExecutor;
 
 /**
  * Insert all the supported Ion types into a ledger and verify that they are stored and can be retrieved properly, retaining
@@ -139,42 +137,41 @@ public class InsertIonTypes {
         final IonSymbol ionNullSymbol = Constants.SYSTEM.newNullSymbol();
         final IonTimestamp ionNullTimestamp = Constants.SYSTEM.newNullTimestamp();
 
-        try (QldbSession session = ConnectToLedger.createQldbSession()) {
-            session.execute(txn -> {
-                CreateTable.createTable(txn, TABLE_NAME);
-                final Document document = new Document(Constants.SYSTEM.newString("val"));
-                InsertDocument.insertDocuments(txn, TABLE_NAME, Collections.singletonList(document));
 
-                updateRecordAndVerifyType(txn, ionBlob);
-                updateRecordAndVerifyType(txn, ionBool);
-                updateRecordAndVerifyType(txn, ionClob);
-                updateRecordAndVerifyType(txn, ionDecimal);
-                updateRecordAndVerifyType(txn, ionFloat);
-                updateRecordAndVerifyType(txn, ionInt);
-                updateRecordAndVerifyType(txn, ionList);
-                updateRecordAndVerifyType(txn, ionNull);
-                updateRecordAndVerifyType(txn, ionSexp);
-                updateRecordAndVerifyType(txn, ionString);
-                updateRecordAndVerifyType(txn, ionStruct);
-                updateRecordAndVerifyType(txn, ionSymbol);
-                updateRecordAndVerifyType(txn, ionTimestamp);
+        ConnectToLedger.getDriver().execute(txn -> {
+            CreateTable.createTable(txn, TABLE_NAME);
+            final Document document = new Document(Constants.SYSTEM.newString("val"));
+            InsertDocument.insertDocuments(txn, TABLE_NAME, Collections.singletonList(document));
 
-                updateRecordAndVerifyType(txn, ionNullBlob);
-                updateRecordAndVerifyType(txn, ionNullBool);
-                updateRecordAndVerifyType(txn, ionNullClob);
-                updateRecordAndVerifyType(txn, ionNullDecimal);
-                updateRecordAndVerifyType(txn, ionNullFloat);
-                updateRecordAndVerifyType(txn, ionNullInt);
-                updateRecordAndVerifyType(txn, ionNullList);
-                updateRecordAndVerifyType(txn, ionNullSexp);
-                updateRecordAndVerifyType(txn, ionNullString);
-                updateRecordAndVerifyType(txn, ionNullStruct);
-                updateRecordAndVerifyType(txn, ionNullSymbol);
-                updateRecordAndVerifyType(txn, ionNullTimestamp);
+            updateRecordAndVerifyType(txn, ionBlob);
+            updateRecordAndVerifyType(txn, ionBool);
+            updateRecordAndVerifyType(txn, ionClob);
+            updateRecordAndVerifyType(txn, ionDecimal);
+            updateRecordAndVerifyType(txn, ionFloat);
+            updateRecordAndVerifyType(txn, ionInt);
+            updateRecordAndVerifyType(txn, ionList);
+            updateRecordAndVerifyType(txn, ionNull);
+            updateRecordAndVerifyType(txn, ionSexp);
+            updateRecordAndVerifyType(txn, ionString);
+            updateRecordAndVerifyType(txn, ionStruct);
+            updateRecordAndVerifyType(txn, ionSymbol);
+            updateRecordAndVerifyType(txn, ionTimestamp);
 
-                deleteTable(txn, TABLE_NAME);
-            }, retry -> log.info(String.format("Retry %d due to retriable error", retry)));
-        }
+            updateRecordAndVerifyType(txn, ionNullBlob);
+            updateRecordAndVerifyType(txn, ionNullBool);
+            updateRecordAndVerifyType(txn, ionNullClob);
+            updateRecordAndVerifyType(txn, ionNullDecimal);
+            updateRecordAndVerifyType(txn, ionNullFloat);
+            updateRecordAndVerifyType(txn, ionNullInt);
+            updateRecordAndVerifyType(txn, ionNullList);
+            updateRecordAndVerifyType(txn, ionNullSexp);
+            updateRecordAndVerifyType(txn, ionNullString);
+            updateRecordAndVerifyType(txn, ionNullStruct);
+            updateRecordAndVerifyType(txn, ionNullSymbol);
+            updateRecordAndVerifyType(txn, ionNullTimestamp);
+
+            deleteTable(txn, TABLE_NAME);
+        });
     }
 
     /**
