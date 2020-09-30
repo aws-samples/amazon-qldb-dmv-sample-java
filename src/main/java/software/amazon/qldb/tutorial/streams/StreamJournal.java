@@ -270,7 +270,11 @@ public final class StreamJournal {
      */
     public static void createTables() {
         CreateTable.main();
-    }
+        try {
+            Thread.sleep(4000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }}
 
     public static void insertDocuments() {
         InsertDocument.main();
