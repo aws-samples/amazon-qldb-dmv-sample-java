@@ -274,7 +274,8 @@ public final class StreamJournal {
             Thread.sleep(4000);
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }}
+        }
+    }
 
     public static void insertDocuments() {
         InsertDocument.main();
