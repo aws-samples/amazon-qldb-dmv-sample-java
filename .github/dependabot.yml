@@ -2,7 +2,7 @@ version: 2
 updates:
   - package-ecosystem: "gradle"
     directory: "/"
-    target-branch: "v1.x"
+    target-branch: "master"
     open-pull-requests-limit: 15
     schedule:
       interval: "daily"
