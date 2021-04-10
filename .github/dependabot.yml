@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    target-branch: "v1.x"
+    open-pull-requests-limit: 15
+    schedule:
+      interval: "daily"
+    ignore:
+      - dependency-name: "software.amazon.qldb:amazon-qldb-driver-java"
+        versions: "[2.0,)"
