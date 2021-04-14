@@ -64,7 +64,6 @@ Below is a list of the sample applications included in this repository with the 
 - TransferVehicleOwnership
 - DeregisterDriversLicense
 - QueryHistory
-- OccConflictDemo
 - InsertIonTypes
 
 ### Exporting data
