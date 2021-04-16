@@ -20,7 +20,7 @@ compileJava {
 dependencies {
     compile group: 'software.amazon.qldb', name: 'amazon-qldb-driver-java', version: '2.0.0'
     
-    compile group: 'com.amazonaws', name: 'aws-java-sdk-core', version: '1.11.649'
+    compile group: 'com.amazonaws', name: 'aws-java-sdk-core', version: '1.11.1000'
     compile group: 'com.amazonaws', name: 'aws-java-sdk-iam', version: '1.11.649'
     compile group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.11.649'
     compile group: 'com.amazonaws', name: 'aws-java-sdk-sts', version: '1.11.649'
