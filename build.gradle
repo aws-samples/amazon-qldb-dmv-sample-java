@@ -29,7 +29,7 @@ dependencies {
     compile group: 'com.amazonaws', name: 'aws-java-sdk-qldb', version: '1.11.785'
     compile group: 'com.amazonaws', name: 'amazon-kinesis-client', version: '1.11.2'
 
-    compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion', version: '2.10.0.pr1'
+    compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion', version: '2.12.3'
     compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-cbor', version: '2.10.0.pr1'
     compile group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.11.2'
 }
