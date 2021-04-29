@@ -1,5 +1,8 @@
 # Amazon QLDB Java DMV Sample App
 
+[![license](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/awslabs/amazon-qldb-driver-java/blob/master/LICENSE)
+[![AWS Provider](https://img.shields.io/badge/provider-AWS-orange?logo=amazon-aws&color=ff9900)](https://aws.amazon.com/qldb/)
+
 The samples in this project demonstrate several uses of Amazon QLDB.
 
 ## Requirements
