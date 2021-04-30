@@ -1,4 +1,6 @@
 # Amazon QLDB Java DMV Sample App
+[![license](https://img.shields.io/badge/license-MIT-green)](https://github.com/aws-samples/amazon-qldb-dmv-sample-java/blob/master/LICENSE)
+[![AWS Provider](https://img.shields.io/badge/provider-AWS-orange?logo=amazon-aws&color=ff9900)](https://aws.amazon.com/qldb/)
 
 The samples in this project demonstrate several uses of Amazon QLDB.
 
