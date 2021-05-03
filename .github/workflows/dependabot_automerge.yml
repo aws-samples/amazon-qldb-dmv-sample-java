@@ -2,7 +2,7 @@ name: "Dependabot Automerge"
 
 on:
   workflow_run:
-    workflows: ["Build CI"]
+    workflows: ["CI Build"]
     types: 
       - completed
 
