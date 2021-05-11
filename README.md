@@ -98,6 +98,20 @@ Below is a list of the sample applications included in this repository with the 
 - DeletionProtection
 - DeleteLedger
 
+### Documentation 
+
+Javadoc is used for documentation. You can generate HTML locally with the following:
+
+```mvn site```
+
+It will generate the Javadoc for public members (defined in <reporting/>) using the given stylesheet (defined in <reporting/>), and with an help page (default value for nohelp is true).
+
+```mvn javadoc:javadoc```
+
+It will generate the Javadoc for private members (defined in <build/>) using the stylesheet (defined in <reporting/>), and with no help page (defined in <build/>).
+
+Please see [Javadoc usage](https://maven.apache.org/plugins/maven-javadoc-plugin/usage.html).
+
 ## Security
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
