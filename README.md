@@ -5,6 +5,8 @@
 
 The samples in this project demonstrate several uses of Amazon QLDB.
 
+For our tutorial, see [Java and Amazon QLDB](https://docs.aws.amazon.com/qldb/latest/developerguide/getting-started.java.html).
+
 ## Requirements
 
 ### Basic Configuration
