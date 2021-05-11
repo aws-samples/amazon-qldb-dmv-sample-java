@@ -96,6 +96,9 @@ Below is a list of the sample applications included in this repository with the 
 - DeletionProtection
 - DeleteLedger
 
+## Security
+
+See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
 
 
 ## License
