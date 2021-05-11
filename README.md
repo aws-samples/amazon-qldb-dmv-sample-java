@@ -11,6 +11,8 @@ The samples in this project demonstrate several uses of Amazon QLDB.
 
 See [Accessing Amazon QLDB](https://docs.aws.amazon.com/qldb/latest/developerguide/accessing.html) for information on connecting to AWS.
 
+See [Setting Region](https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/region-selection.html) page for more information on using the AWS SDK for Java. You will need to set a region before running the sample code.
+
 ### Java 8 and Gradle
 
 The examples are written in Java 8 using the Gradle build tool. Java 8 must be installed to build the examples, however 
