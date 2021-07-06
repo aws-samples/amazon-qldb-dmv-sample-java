@@ -53,9 +53,8 @@ public final class ListJournalExports {
      *
      * @param name
      *              The name of the ledger.
-     * @return a list of {@link JournalS3ExportDescription}.
      */
-    public static List<JournalS3ExportDescription> listExports(final String name) {
+    public static void listExports(final String name) {
         log.info("Let's list journal exports for the ledger with name: {}...", name);
 
         List<JournalS3ExportDescription> exportDescriptions = new ArrayList<>();
@@ -70,7 +69,6 @@ public final class ListJournalExports {
         } while (nextToken != null);
 
         log.info("Success. List of journal exports: {}", exportDescriptions);
-        return exportDescriptions;
     }
 
     /**
@@ -80,9 +78,8 @@ public final class ListJournalExports {
      *              The name of the ledger.
      * @param nextToken
      *              The next token to provide in the service call.
-     * @return a list of {@link JournalS3ExportDescription}.
      */
-    public static List<JournalS3ExportDescription> listExports(final String name, final String nextToken) {
+    public static void listExports(final String name, final String nextToken) {
         log.info("Let's list journal exports for the ledger with name: {}, nextToken: {}...", name, nextToken);
 
         ListJournalS3ExportsForLedgerRequest request = new ListJournalS3ExportsForLedgerRequest()
@@ -92,15 +89,12 @@ public final class ListJournalExports {
         List<JournalS3ExportDescription> exportDescriptions = result.getJournalS3Exports();
 
         log.info("Success. List of journal exports: {}", exportDescriptions);
-        return exportDescriptions;
     }
 
     /**
      * List all journal exports for an AWS account.
-     *
-     * @return a list of {@link JournalS3ExportDescription}.
      */
-    public static List<JournalS3ExportDescription> listExports() {
+    public static void listExports() {
         log.info("Let's list journal exports for the AWS account.");
 
         List<JournalS3ExportDescription> exportDescriptions = new ArrayList<>();
@@ -114,7 +108,6 @@ public final class ListJournalExports {
         } while (nextToken != null);
 
         log.info("Success. List of journal exports: {}", exportDescriptions);
-        return exportDescriptions;
     }
 
     public static void main(final String... args) throws Exception {
