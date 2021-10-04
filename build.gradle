@@ -30,6 +30,6 @@ dependencies {
     compile group: 'com.amazonaws', name: 'amazon-kinesis-client', version: '1.14.4'
 
     compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion', version: '2.12.5'
-    compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-cbor', version: '2.12.5'
+    compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-cbor', version: '2.13.0'
     compile group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.14.1'
 }
