@@ -21,9 +21,9 @@ dependencies {
     compile group: 'software.amazon.qldb', name: 'amazon-qldb-driver-java', version: '2.3.1'
     
     compile group: 'com.amazonaws', name: 'aws-java-sdk-core', version: '1.12.74'
-    compile group: 'com.amazonaws', name: 'aws-java-sdk-iam', version: '1.12.74'
+    compile group: 'com.amazonaws', name: 'aws-java-sdk-iam', version: '1.12.99'
     compile group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.74'
-    compile group: 'com.amazonaws', name: 'aws-java-sdk-sts', version: '1.12.74'
+    compile group: 'com.amazonaws', name: 'aws-java-sdk-sts', version: '1.12.102'
 
     runtime group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13'
     compile group: 'com.amazonaws', name: 'aws-java-sdk-qldb', version: '1.12.84'
