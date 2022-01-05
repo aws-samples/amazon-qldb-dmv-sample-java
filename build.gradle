@@ -22,7 +22,7 @@ dependencies {
     
     compile group: 'com.amazonaws', name: 'aws-java-sdk-core', version: '1.12.129'
     compile group: 'com.amazonaws', name: 'aws-java-sdk-iam', version: '1.12.129'
-    compile group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.119'
+    compile group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.129'
     compile group: 'com.amazonaws', name: 'aws-java-sdk-sts', version: '1.12.129'
 
     runtime group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13'
@@ -31,5 +31,5 @@ dependencies {
 
     compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion', version: '2.13.1'
     compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-cbor', version: '2.13.0'
-    compile group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.15.0'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.17.0'
 }
