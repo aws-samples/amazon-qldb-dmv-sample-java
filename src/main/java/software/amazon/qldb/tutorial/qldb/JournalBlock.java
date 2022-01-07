@@ -160,8 +160,14 @@ public final class JournalBlock {
         if (!Arrays.deepEquals(getEntriesHashList(), that.getEntriesHashList())) {
             return false;
         }
-        if (!getTransactionInfo().equals(that.getTransactionInfo())) {
-            return false;
+        if (getTransactionInfo() != null) {
+            if (!getTransactionInfo().equals(that.getTransactionInfo())) {
+                return false;
+            }
+        } else {
+            if (that.getTransactionInfo() != null) {
+                return false;
+            }
         }
         return getRevisions() != null ? getRevisions().equals(that.getRevisions()) : that.getRevisions() == null;
     }
@@ -175,7 +181,7 @@ public final class JournalBlock {
         result = 31 * result + Arrays.hashCode(getEntriesHash());
         result = 31 * result + Arrays.hashCode(getPreviousBlockHash());
         result = 31 * result + Arrays.deepHashCode(getEntriesHashList());
-        result = 31 * result + getTransactionInfo().hashCode();
+        result = 31 * result + (getTransactionInfo() != null ? getTransactionInfo().hashCode() : 0);
         result = 31 * result + (getRevisions() != null ? getRevisions().hashCode() : 0);
         return result;
     }
@@ -217,10 +223,12 @@ public final class JournalBlock {
         Set<ByteBuffer> entriesHashSet = new HashSet<>();
         Arrays.stream(entriesHashList).forEach(hash -> entriesHashSet.add(wrap(hash).asReadOnlyBuffer()));
 
-        byte[] computedTransactionInfoHash = computeTransactionInfoHash();
-        if (!entriesHashSet.contains(wrap(computedTransactionInfoHash).asReadOnlyBuffer())) {
-            throw new IllegalArgumentException(
-                    "Block transactionInfo hash is not contained in the QLDB block entries hash list.");
+        if (transactionInfo != null) {
+            byte[] computedTransactionInfoHash = computeTransactionInfoHash();
+            if (!entriesHashSet.contains(wrap(computedTransactionInfoHash).asReadOnlyBuffer())) {
+                throw new IllegalArgumentException(
+                        "Block transactionInfo hash is not contained in the QLDB block entries hash list.");
+            }
         }
 
         if (revisions != null) {
