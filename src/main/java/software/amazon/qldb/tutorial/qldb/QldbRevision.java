@@ -182,9 +182,8 @@ public final class QldbRevision {
     public void verifyRevisionHash() {
         // Certain internal-only system revisions only contain a hash which cannot be
         // further computed. However, these system hashes still participate to validate
-        // the journal block. User revisions will always contain values for all fields
-        // and can therefore have their hash computed.
-        if (blockAddress == null && metadata == null && data == null) {
+        // the journal block.
+        if (blockAddress == null || metadata == null || data == null) {
             return;
         }
 

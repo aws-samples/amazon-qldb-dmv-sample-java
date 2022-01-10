@@ -4,4 +4,4 @@
 .settings/
 bin/
 .git
-
+build/
