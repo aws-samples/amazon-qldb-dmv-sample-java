@@ -1,14 +1,18 @@
 # Amazon QLDB Java DMV Sample App
-[![license](https://img.shields.io/badge/license-MIT-green)](https://github.com/aws-samples/amazon-qldb-dmv-sample-java/blob/master/LICENSE)
+[![license](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/awslabs/amazon-qldb-driver-java/blob/master/LICENSE)
 [![AWS Provider](https://img.shields.io/badge/provider-AWS-orange?logo=amazon-aws&color=ff9900)](https://aws.amazon.com/qldb/)
 
 The samples in this project demonstrate several uses of Amazon QLDB.
+
+For our tutorial, see [Java and Amazon QLDB](https://docs.aws.amazon.com/qldb/latest/developerguide/getting-started.java.html).
 
 ## Requirements
 
 ### Basic Configuration
 
 See [Accessing Amazon QLDB](https://docs.aws.amazon.com/qldb/latest/developerguide/accessing.html) for information on connecting to AWS.
+
+See [Setting Region](https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/region-selection.html) page for more information on using the AWS SDK for Java. You will need to set a region before running the sample code.
 
 ### Java 8 and Gradle
 
@@ -95,6 +99,23 @@ Below is a list of the sample applications included in this repository with the 
 - DeletionProtection
 - DeleteLedger
 
+### Documentation 
+
+Javadoc is used for documentation. You can generate HTML locally with the following:
+
+```mvn site```
+
+It will generate the Javadoc for public members (defined in <reporting/>) using the given stylesheet (defined in <reporting/>), and with an help page (default value for nohelp is true).
+
+```mvn javadoc:javadoc```
+
+It will generate the Javadoc for private members (defined in <build/>) using the stylesheet (defined in <reporting/>), and with no help page (defined in <build/>).
+
+Please see [Javadoc usage](https://maven.apache.org/plugins/maven-javadoc-plugin/usage.html).
+
+## Security
+
+See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
 
 
 ## License
