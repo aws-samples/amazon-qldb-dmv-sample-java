@@ -100,10 +100,11 @@ public final class AddSecondaryOwner {
                                                final String secondaryOwner) {
         try {
             log.info("Inserting secondary owner for vehicle with VIN: {}...", vin);
-            final String query = String.format("FROM VehicleRegistration AS v WHERE v.VIN = '%s' " +
-                    "INSERT INTO v.Owners.SecondaryOwners VALUE ?", vin);
+            final String query = String.format("FROM VehicleRegistration AS v WHERE v.VIN = ?" +
+                    "INSERT INTO v.Owners.SecondaryOwners VALUE ?");
             final IonValue newOwner = Constants.MAPPER.writeValueAsIonValue(new Owner(secondaryOwner));
-            Result result = txn.execute(query, newOwner);
+            final IonValue vinAsIonValue = Constants.MAPPER.writeValueAsIonValue(vin);
+            Result result = txn.execute(query, vinAsIonValue, newOwner);
             log.info("VehicleRegistration Document IDs which had secondary owners added: ");
             ScanTable.printDocuments(result);
         } catch (IOException ioe) {
