@@ -578,7 +578,7 @@ public final class StreamJournal {
                 if (revisionSummary.getDocumentId() != null) {
                     return revisionsByHash.get(wrap(revisionSummary.getHash()).asReadOnlyBuffer());
                 } else {
-                    return new QldbRevision(null, null, revisionSummary.getHash(), null);
+                    return new QldbRevision(null, null, revisionSummary.getHash(), null, null);
                 }
             }).collect(Collectors.toList());
         }
@@ -591,6 +591,7 @@ public final class StreamJournal {
                 blockSummaryRecord.getPreviousBlockHash(),
                 blockSummaryRecord.getEntriesHashList(),
                 blockSummaryRecord.getTransactionInfo(),
+                blockSummaryRecord.getRedactionInfo(),
                 revisions);
     }
 

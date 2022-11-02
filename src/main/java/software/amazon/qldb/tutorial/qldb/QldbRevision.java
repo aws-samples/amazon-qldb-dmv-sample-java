@@ -40,16 +40,19 @@ public final class QldbRevision {
     private final BlockAddress blockAddress;
     private final RevisionMetadata metadata;
     private final byte[] hash;
+    private final byte[] dataHash;
     private final IonStruct data;
 
     @JsonCreator
     public QldbRevision(@JsonProperty("blockAddress") final BlockAddress blockAddress,
                         @JsonProperty("metadata") final RevisionMetadata metadata,
                         @JsonProperty("hash") final byte[] hash,
+                        @JsonProperty("dataHash") final byte[] dataHash,
                         @JsonProperty("data") final IonStruct data) {
         this.blockAddress = blockAddress;
         this.metadata = metadata;
         this.hash = hash;
+        this.dataHash = dataHash;
         this.data = data;
     }
 
@@ -72,12 +75,23 @@ public final class QldbRevision {
     }
 
     /**
-     * Gets the SHA-256 hash value of the data.
+     * Gets the SHA-256 hash value of the revision.
+     * This is equivalent to the hash of the revision metadata and data.
      *
      * @return the byte array representing the hash.
      */
     public byte[] getHash() {
         return hash;
+    }
+
+    /**
+     * Gets the SHA-256 hash value of the data portion of the revision.
+     * This is only present if the revision is redacted.
+     *
+     * @return the byte array representing the hash.
+     */
+    public byte[] getDataHash() {
+        return dataHash;
     }
 
     /**
@@ -90,13 +104,23 @@ public final class QldbRevision {
     }
 
     /**
+     * Returns true if the revision has been redacted.
+     * @return a boolean value representing the redaction status
+     * of this revision.
+     */
+    public Boolean isRedacted() {
+        return dataHash != null;
+    }
+
+    /**
      * Constructs a new {@link QldbRevision} from an {@link IonStruct}.
      *
      * The specified {@link IonStruct} must include the following fields
      *
      * - blockAddress -- a {@link BlockAddress},
      * - metadata -- a {@link RevisionMetadata},
-     * - hash -- the document's hash calculated by QLDB,
+     * - hash -- the revision's hash calculated by QLDB,
+     * - dataHash -- the user data's hash calculated by QLDB (only present if revision is redacted),
      * - data -- an {@link IonStruct} containing user data in the document.
      *
      * If any of these fields are missing or are malformed, then throws {@link IllegalArgumentException}.
@@ -112,15 +136,25 @@ public final class QldbRevision {
     public static QldbRevision fromIon(final IonStruct ionStruct) throws IOException {
         try {
             BlockAddress blockAddress = Constants.MAPPER.readValue(ionStruct.get("blockAddress"), BlockAddress.class);
-            IonBlob hash = (IonBlob) ionStruct.get("hash");
+            IonBlob revisionHash = (IonBlob) ionStruct.get("hash");
             IonStruct metadataStruct = (IonStruct) ionStruct.get("metadata");
-            IonStruct data = (IonStruct) ionStruct.get("data");
-            if (hash == null || data == null) {
+            IonStruct data = ionStruct.get("data") == null || ionStruct.get("data").isNullValue() ?
+                null : (IonStruct) ionStruct.get("data");
+            IonBlob dataHash = ionStruct.get("dataHash") == null || ionStruct.get("dataHash").isNullValue() ?
+                null : (IonBlob) ionStruct.get("dataHash");
+            if (revisionHash == null || metadataStruct == null) {
                 throw new IllegalArgumentException("Document is missing required fields");
             }
-            verifyRevisionHash(metadataStruct, data, hash.getBytes());
+            byte[] dataHashBytes = dataHash != null ? dataHash.getBytes() : QldbIonUtils.hashIonValue(data);
+            verifyRevisionHash(metadataStruct, dataHashBytes, revisionHash.getBytes());
             RevisionMetadata metadata = RevisionMetadata.fromIon(metadataStruct);
-            return new QldbRevision(blockAddress, metadata, hash.getBytes(), data);
+            return new QldbRevision(
+                    blockAddress,
+                    metadata,
+                    revisionHash.getBytes(),
+                    dataHash != null ? dataHash.getBytes() : null,
+                    data
+            );
         } catch (ClassCastException e) {
             log.error("Failed to parse ion document");
             throw new IllegalArgumentException("Document members are not of the correct type", e);
@@ -138,6 +172,7 @@ public final class QldbRevision {
                 "blockAddress=" + blockAddress +
                 ", metadata=" + metadata +
                 ", hash=" + Arrays.toString(hash) +
+                ", dataHash=" + Arrays.toString(dataHash) +
                 ", data=" + data +
                 '}';
     }
@@ -156,9 +191,11 @@ public final class QldbRevision {
             return false;
         }
         final QldbRevision that = (QldbRevision) o;
-        return Objects.equals(getBlockAddress(), that.getBlockAddress()) && Objects.equals(getMetadata(),
-            that.getMetadata()) && Arrays.equals(getHash(), that.getHash()) && Objects.equals(getData(),
-            that.getData());
+        return Objects.equals(getBlockAddress(), that.getBlockAddress())
+                && Objects.equals(getMetadata(), that.getMetadata())
+                && Arrays.equals(getHash(), that.getHash())
+                && Arrays.equals(getDataHash(), that.getDataHash())
+                && Objects.equals(getData(), that.getData());
     }
 
     /**
@@ -182,22 +219,23 @@ public final class QldbRevision {
     public void verifyRevisionHash() {
         // Certain internal-only system revisions only contain a hash which cannot be
         // further computed. However, these system hashes still participate to validate
-        // the journal block.
-        if (blockAddress == null || metadata == null || data == null) {
+        // the journal block. User revisions will always contain values for all fields
+        // and can therefore have their hash computed.
+        if (blockAddress == null && metadata == null && data == null && dataHash == null) {
             return;
         }
 
         try {
             IonStruct metadataIon = (IonStruct) Constants.MAPPER.writeValueAsIonValue(metadata);
-            verifyRevisionHash(metadataIon, data, hash);
+            byte[] dataHashBytes = isRedacted() ? dataHash : QldbIonUtils.hashIonValue(data);
+            verifyRevisionHash(metadataIon, dataHashBytes, hash);
         } catch (IOException e) {
             throw new IllegalArgumentException("Could not encode revision metadata to ion.", e);
         }
     }
 
-    private static void verifyRevisionHash(IonStruct metadata, IonStruct revisionData, byte[] expectedHash) {
+    private static void verifyRevisionHash(IonStruct metadata, byte[] dataHash, byte[] expectedHash) {
         byte[] metadataHash = QldbIonUtils.hashIonValue(metadata);
-        byte[] dataHash = QldbIonUtils.hashIonValue(revisionData);
         byte[] candidateHash = Verifier.dot(metadataHash, dataHash);
         if (!Arrays.equals(candidateHash, expectedHash)) {
             throw new IllegalArgumentException("Hash entry of QLDB revision and computed hash "

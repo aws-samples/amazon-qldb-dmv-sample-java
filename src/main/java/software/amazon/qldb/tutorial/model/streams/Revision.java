@@ -21,6 +21,7 @@ package software.amazon.qldb.tutorial.model.streams;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonStreamContext;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -42,6 +43,7 @@ public final class Revision {
     private final BlockAddress blockAddress;
     private final RevisionMetadata metadata;
     private final byte[] hash;
+    private final byte[] dataHash;
     @JsonDeserialize(using = RevisionDataDeserializer.class)
     private final RevisionData data;
 
@@ -49,10 +51,12 @@ public final class Revision {
     public Revision(@JsonProperty("blockAddress") final BlockAddress blockAddress,
                     @JsonProperty("metadata") final RevisionMetadata metadata,
                     @JsonProperty("hash") final byte[] hash,
+                    @JsonProperty("dataHash") final byte[] dataHash,
                     @JsonProperty("data") final RevisionData data) {
         this.blockAddress = blockAddress;
         this.metadata = metadata;
         this.hash = hash;
+        this.dataHash = dataHash;
         this.data = data;
     }
 
@@ -74,6 +78,9 @@ public final class Revision {
             return false;
         }
         if (!Arrays.equals(hash, revision.hash)) {
+            return false;
+        }
+        if (!Arrays.equals(dataHash, revision.dataHash)) {
             return false;
         }
         return Objects.equals(data, revision.data);
@@ -99,6 +106,7 @@ public final class Revision {
                 "blockAddress=" + blockAddress +
                 ", metadata=" + metadata +
                 ", hash=" + Arrays.toString(hash) +
+                ", dataHash=" + Arrays.toString(dataHash) +
                 ", data=" + data +
                 '}';
     }
@@ -115,6 +123,10 @@ public final class Revision {
         return hash;
     }
 
+    public byte[] getDataHash() {
+        return dataHash;
+    }
+
     public RevisionData getData() {
         return data;
     }
@@ -123,7 +135,11 @@ public final class Revision {
 
         @Override
         public RevisionData deserialize(JsonParser jp, DeserializationContext dc) throws IOException {
-            TableInfo tableInfo = (TableInfo) jp.getParsingContext().getParent().getCurrentValue();
+            JsonStreamContext parsingContext = jp.getParsingContext();
+            while (!(parsingContext.getCurrentValue() instanceof TableInfo)) {
+                parsingContext = parsingContext.getParent();
+            }
+            TableInfo tableInfo = (TableInfo) parsingContext.getCurrentValue();
             RevisionData revisionData;
             switch (tableInfo.getTableName()) {
                 case "VehicleRegistration":
