@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.ion.IonTimestampSerializers;
 import software.amazon.qldb.tutorial.qldb.BlockAddress;
+import software.amazon.qldb.tutorial.qldb.RedactionInfo;
 import software.amazon.qldb.tutorial.qldb.TransactionInfo;
 
 import java.util.Arrays;
@@ -45,6 +46,7 @@ public final class BlockSummaryRecord implements StreamRecord.StreamRecordPayloa
     private byte[] previousBlockHash;
     private byte[][] entriesHashList;
     private TransactionInfo transactionInfo;
+    private RedactionInfo redactionInfo;
     private List<RevisionSummary> revisionSummaries;
 
     @JsonCreator
@@ -56,6 +58,7 @@ public final class BlockSummaryRecord implements StreamRecord.StreamRecordPayloa
                               @JsonProperty("previousBlockHash") final byte[] previousBlockHash,
                               @JsonProperty("entriesHashList") final byte[][] entriesHashList,
                               @JsonProperty("transactionInfo") final TransactionInfo transactionInfo,
+                              @JsonProperty("redactionInfo") final RedactionInfo redactionInfo,
                               @JsonProperty("revisionSummaries") final List<RevisionSummary> revisionSummaries) {
         this.blockAddress = blockAddress;
         this.transactionId = transactionId;
@@ -65,6 +68,7 @@ public final class BlockSummaryRecord implements StreamRecord.StreamRecordPayloa
         this.previousBlockHash = previousBlockHash;
         this.entriesHashList = entriesHashList;
         this.transactionInfo = transactionInfo;
+        this.redactionInfo = redactionInfo;
         this.revisionSummaries = revisionSummaries;
     }
 
@@ -79,6 +83,7 @@ public final class BlockSummaryRecord implements StreamRecord.StreamRecordPayloa
                 + ", previousBlockHash=" + Arrays.toString(previousBlockHash)
                 + ", entriesHashList=" + Arrays.stream(entriesHashList).map(Arrays::toString).collect(Collectors.toList())
                 + ", transactionInfo=" + transactionInfo
+                + ", redactionInfo=" + redactionInfo
                 + ", revisionSummaries=" + revisionSummaries
                 + '}';
     }
@@ -118,6 +123,9 @@ public final class BlockSummaryRecord implements StreamRecord.StreamRecordPayloa
         if (!Objects.equals(transactionInfo, that.transactionInfo)) {
             return false;
         }
+        if (!Objects.equals(redactionInfo, that.redactionInfo)) {
+            return false;
+        }
         return Objects.equals(revisionSummaries, that.revisionSummaries);
     }
 
@@ -131,6 +139,7 @@ public final class BlockSummaryRecord implements StreamRecord.StreamRecordPayloa
         result = 31 * result + Arrays.hashCode(previousBlockHash);
         result = 31 * result + Arrays.deepHashCode(entriesHashList);
         result = 31 * result + (transactionInfo != null ? transactionInfo.hashCode() : 0);
+        result = 31 * result + (redactionInfo != null ? redactionInfo.hashCode() : 0);
         result = 31 * result + (revisionSummaries != null ? revisionSummaries.hashCode() : 0);
         return result;
     }
@@ -165,6 +174,10 @@ public final class BlockSummaryRecord implements StreamRecord.StreamRecordPayloa
 
     public TransactionInfo getTransactionInfo() {
         return transactionInfo;
+    }
+
+    public RedactionInfo getRedactionInfo() {
+        return redactionInfo;
     }
 
     public List<RevisionSummary> getRevisionSummaries() {

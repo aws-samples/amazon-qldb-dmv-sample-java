@@ -54,6 +54,7 @@ public final class JournalBlock {
     private byte[] previousBlockHash;
     private byte[][] entriesHashList;
     private TransactionInfo transactionInfo;
+    private RedactionInfo redactionInfo;
     private List<QldbRevision> revisions;
 
     @JsonCreator
@@ -65,6 +66,7 @@ public final class JournalBlock {
                         @JsonProperty("previousBlockHash") final byte[] previousBlockHash,
                         @JsonProperty("entriesHashList") final byte[][] entriesHashList,
                         @JsonProperty("transactionInfo") final TransactionInfo transactionInfo,
+                        @JsonProperty("redactionInfo") final RedactionInfo redactionInfo,
                         @JsonProperty("revisions") final List<QldbRevision> revisions) {
         this.blockAddress = blockAddress;
         this.transactionId = transactionId;
@@ -74,6 +76,7 @@ public final class JournalBlock {
         this.previousBlockHash = previousBlockHash;
         this.entriesHashList = entriesHashList;
         this.transactionInfo = transactionInfo;
+        this.redactionInfo = redactionInfo;
         this.revisions = revisions;
     }
 
@@ -95,6 +98,10 @@ public final class JournalBlock {
 
     public TransactionInfo getTransactionInfo() {
         return transactionInfo;
+    }
+
+    public RedactionInfo getRedactionInfo() {
+        return redactionInfo;
     }
 
     public List<QldbRevision> getRevisions() {
@@ -124,6 +131,7 @@ public final class JournalBlock {
                 + ", previousBlockHash=" + Arrays.toString(previousBlockHash)
                 + ", entriesHashList=" + Arrays.toString(entriesHashList)
                 + ", transactionInfo=" + transactionInfo
+                + ", redactionInfo=" + redactionInfo
                 + ", revisions=" + revisions
                 + '}';
     }
@@ -160,14 +168,11 @@ public final class JournalBlock {
         if (!Arrays.deepEquals(getEntriesHashList(), that.getEntriesHashList())) {
             return false;
         }
-        if (getTransactionInfo() != null) {
-            if (!getTransactionInfo().equals(that.getTransactionInfo())) {
-                return false;
-            }
-        } else {
-            if (that.getTransactionInfo() != null) {
-                return false;
-            }
+        if (!getTransactionInfo().equals(that.getTransactionInfo())) {
+            return false;
+        }
+        if (getRedactionInfo() != null ? !getRedactionInfo().equals(that.getRedactionInfo()) : that.getRedactionInfo() != null) {
+            return false;
         }
         return getRevisions() != null ? getRevisions().equals(that.getRevisions()) : that.getRevisions() == null;
     }
@@ -181,7 +186,8 @@ public final class JournalBlock {
         result = 31 * result + Arrays.hashCode(getEntriesHash());
         result = 31 * result + Arrays.hashCode(getPreviousBlockHash());
         result = 31 * result + Arrays.deepHashCode(getEntriesHashList());
-        result = 31 * result + (getTransactionInfo() != null ? getTransactionInfo().hashCode() : 0);
+        result = 31 * result + getTransactionInfo().hashCode();
+        result = 31 * result + (getRedactionInfo() != null ? getRedactionInfo().hashCode() : 0);
         result = 31 * result + (getRevisions() != null ? getRevisions().hashCode() : 0);
         return result;
     }
@@ -192,6 +198,7 @@ public final class JournalBlock {
      *
      * The components that contribute to the hash of the journal block consist of the following:
      *   - user transaction information (contained in [transactionInfo])
+     *   - user redaction information (contained in [redactionInfo])
      *   - user revisions (contained in [revisions])
      *   - hashes of internal-only system metadata (contained in [revisions] and in [entriesHashList])
      *   - the previous block hash
@@ -207,13 +214,14 @@ public final class JournalBlock {
      * performs the following steps:
      *
      * 1. Compute the hash of the [transactionInfo] and validate that it is included in the [entriesHashList].
-     * 2. Validate the hash of each user revision was correctly computed and matches the hash published
+     * 2. Compute the hash of the [redactionInfo], if present, and validate that it is included in the [entriesHashList].
+     * 3. Validate the hash of each user revision was correctly computed and matches the hash published
      * with that revision.
-     * 3. Compute the hash of the [revisions] by treating the revision hashes as the leaf nodes of a Merkle tree
+     * 4. Compute the hash of the [revisions] by treating the revision hashes as the leaf nodes of a Merkle tree
      * and calculating the root hash of that tree. Then validate that hash is included in the [entriesHashList].
-     * 4. Compute the hash of the [entriesHashList] by treating the hashes as the leaf nodes of a Merkle tree
+     * 5. Compute the hash of the [entriesHashList] by treating the hashes as the leaf nodes of a Merkle tree
      * and calculating the root hash of that tree. Then validate that hash matches [entriesHash].
-     * 5. Finally, compute the block hash by computing the hash resulting from concatenating the [entriesHash]
+     * 6. Finally, compute the block hash by computing the hash resulting from concatenating the [entriesHash]
      * and previous block hash, and validate that the result matches the [blockHash] provided by QLDB with the block.
      *
      * This method is called by ValidateQldbHashChain::verify for each journal block to validate its
@@ -223,11 +231,17 @@ public final class JournalBlock {
         Set<ByteBuffer> entriesHashSet = new HashSet<>();
         Arrays.stream(entriesHashList).forEach(hash -> entriesHashSet.add(wrap(hash).asReadOnlyBuffer()));
 
-        if (transactionInfo != null) {
-            byte[] computedTransactionInfoHash = computeTransactionInfoHash();
-            if (!entriesHashSet.contains(wrap(computedTransactionInfoHash).asReadOnlyBuffer())) {
+        byte[] computedTransactionInfoHash = computeTransactionInfoHash();
+        if (!entriesHashSet.contains(wrap(computedTransactionInfoHash).asReadOnlyBuffer())) {
+            throw new IllegalArgumentException(
+                    "Block transactionInfo hash is not contained in the QLDB block entries hash list.");
+        }
+
+        if (redactionInfo != null) {
+            byte[] computedRedactionInfoHash = computeRedactionInfoHash();
+            if (!entriesHashSet.contains(wrap(computedRedactionInfoHash).asReadOnlyBuffer())) {
                 throw new IllegalArgumentException(
-                        "Block transactionInfo hash is not contained in the QLDB block entries hash list.");
+                        "Block redactionInfo hash is not contained in the QLDB block entries hash list.");
             }
         }
 
@@ -256,6 +270,14 @@ public final class JournalBlock {
             return QldbIonUtils.hashIonValue(Constants.MAPPER.writeValueAsIonValue(transactionInfo));
         } catch (IOException e) {
             throw new IllegalArgumentException("Could not compute transactionInfo hash to verify block hash.", e);
+        }
+    }
+
+    private byte[] computeRedactionInfoHash() {
+        try {
+            return QldbIonUtils.hashIonValue(Constants.MAPPER.writeValueAsIonValue(redactionInfo));
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Could not compute redactionInfo hash to verify block hash.", e);
         }
     }
 
