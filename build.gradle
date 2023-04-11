@@ -23,7 +23,7 @@ dependencies {
     compile group: 'com.amazonaws', name: 'aws-java-sdk-core', version: '1.12.385'
     compile group: 'com.amazonaws', name: 'aws-java-sdk-iam', version: '1.12.389'
     compile group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.421'
-    compile group: 'com.amazonaws', name: 'aws-java-sdk-sts', version: '1.12.389'
+    compile group: 'com.amazonaws', name: 'aws-java-sdk-sts', version: '1.12.446'
 
     runtime group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.13'
     compile group: 'com.amazonaws', name: 'aws-java-sdk-qldb', version: '1.12.367'
